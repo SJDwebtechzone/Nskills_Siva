@@ -61,7 +61,7 @@ const VisionSection = () => {
                             <div className="absolute inset-0 bg-gradient-to-t from-[#0b1f3a]/20 to-transparent" />
                         </div>
                         {/* Floating Badge - STABLE */}
-                        <div className="absolute -bottom-6 -right-6 bg-white p-6 rounded-3xl shadow-xl border border-slate-100 hidden md:block">
+                        <div className="absolute -bottom-4 -right-4 md:-bottom-6 md:-right-6 bg-white p-4 md:p-6 rounded-3xl shadow-xl border border-slate-100 block">
                             <div className="flex items-center gap-4">
                                 <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white">
                                     <Target className="w-6 h-6" />

@@ -85,7 +85,7 @@ const WhyUsSection = () => {
                         <motion.div
                             animate={{ y: [0, -10, 0] }}
                             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                            className="absolute -bottom-8 -left-8 bg-white p-6 rounded-[32px] shadow-2xl border border-slate-100 hidden md:flex items-center gap-4"
+                            className="absolute -bottom-6 -left-2 md:-bottom-8 md:-left-8 bg-white p-4 md:p-6 rounded-[24px] md:rounded-[32px] shadow-2xl border border-slate-100 flex items-center gap-3 md:gap-4"
                         >
                             <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white">
                                 <span className="text-lg font-black italic">100%</span>
