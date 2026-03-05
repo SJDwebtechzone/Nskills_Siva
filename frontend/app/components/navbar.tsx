@@ -28,9 +28,9 @@ const Navbar = () => {
 
   const menuItems = [
     { name: "Home", href: "/" },
-    { name: "Skill Training", href: "/skill-training" },
-    { name: "Corporate Training", href: "/corporate-training" },
-    { name: "Consulting Services", href: "/consulting" },
+    { name: "Skill Training", href: "#skill-training" },
+    { name: "Corporate Training", href: "#corporate-training" },
+    { name: "Consulting Services", href: "#consulting" },
     { name: "Course Calendar", href: "/calendar" },
     { name: "Placements", href: "/placements" },
     { name: "Infrastructure", href: "/infrastructure" },

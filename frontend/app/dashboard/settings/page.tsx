@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import axios from "axios";
 import {
     Layout,
@@ -32,10 +33,38 @@ interface Popup {
     is_active: boolean;
 }
 
-export default function SettingsPage() {
-    const [activeTab, setActiveTab] = useState("banner");
+interface NewsItem {
+    id: number;
+    title: string;
+    content: string;
+    image_url: string;
+    created_at: string;
+}
+
+interface Accreditation {
+    id: number;
+    title: string;
+    image_url: string;
+    created_at: string;
+}
+
+function SettingsContent() {
+    const searchParams = useSearchParams();
+    const tab = searchParams.get("tab");
+    const [activeTab, setActiveTab] = useState(tab === "accreditations" ? "accreditations" : tab === "popup" ? "popup" : tab === "news" ? "news" : "banner");
+
+    // Sync tab when URL changes (sidebar navigation)
+    useEffect(() => {
+        if (tab === "popup") setActiveTab("popup");
+        else if (tab === "news") setActiveTab("news");
+        else if (tab === "accreditations") setActiveTab("accreditations");
+        else setActiveTab("banner");
+    }, [tab]);
+
     const [banners, setBanners] = useState<Banner[]>([]);
     const [popups, setPopups] = useState<Popup[]>([]);
+    const [news, setNews] = useState<NewsItem[]>([]);
+    const [accreditations, setAccreditations] = useState<Accreditation[]>([]);
     const [loading, setLoading] = useState(false);
 
     const [bannerForm, setBannerForm] = useState({
@@ -50,9 +79,22 @@ export default function SettingsPage() {
         course_id: "",
     });
 
+    const [newsForm, setNewsForm] = useState({
+        title: "",
+        content: "",
+        image: null as File | null,
+    });
+
+    const [accreditationsForm, setAccreditationsForm] = useState({
+        title: "",
+        image: null as File | null,
+    });
+
     useEffect(() => {
         fetchBanners();
         fetchPopups();
+        fetchNews();
+        fetchAccreditations();
     }, []);
 
     const fetchBanners = async () => {
@@ -68,6 +110,24 @@ export default function SettingsPage() {
         try {
             const res = await axios.get(`${API_BASE_URL}/popups`);
             setPopups(res.data);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const fetchNews = async () => {
+        try {
+            const res = await axios.get(`${API_BASE_URL}/news`);
+            setNews(Object.values(res.data));
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const fetchAccreditations = async () => {
+        try {
+            const res = await axios.get(`${API_BASE_URL}/accreditations`);
+            setAccreditations(Object.values(res.data));
         } catch (err) {
             console.error(err);
         }
@@ -131,45 +191,67 @@ export default function SettingsPage() {
         fetchPopups();
     };
 
+    const addNews = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        const formData = new FormData();
+        formData.append("title", newsForm.title);
+        formData.append("content", newsForm.content);
+        if (newsForm.image) {
+            formData.append("image", newsForm.image);
+        }
+
+        try {
+            await axios.post(`${API_BASE_URL}/news`, formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+            setNewsForm({ title: "", content: "", image: null });
+            fetchNews();
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const deleteNews = async (id: number) => {
+        if (!confirm("Are you sure you want to delete this news item?")) return;
+        await axios.delete(`${API_BASE_URL}/news/${id}`);
+        fetchNews();
+    };
+
+    const addAccreditation = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        const formData = new FormData();
+        formData.append("title", accreditationsForm.title);
+        if (accreditationsForm.image) {
+            formData.append("image", accreditationsForm.image);
+        }
+
+        try {
+            await axios.post(`${API_BASE_URL}/accreditations`, formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+            setAccreditationsForm({ title: "", image: null });
+            fetchAccreditations();
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const deleteAccreditation = async (id: number) => {
+        if (!confirm("Are you sure you want to delete this accreditation?")) return;
+        await axios.delete(`${API_BASE_URL}/accreditations/${id}`);
+        fetchAccreditations();
+    };
+
     return (
         <div className="bg-white rounded-[32px] shadow-sm border border-slate-100 overflow-hidden min-h-[700px] flex flex-col md:flex-row">
-
-            {/* Sidebar Tabs */}
-            <div className="w-full md:w-80 bg-slate-50/50 border-r border-slate-100 p-8">
-                <div className="flex items-center gap-3 mb-10 px-2">
-                    <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
-                        <Globe className="w-5 h-5" />
-                    </div>
-                    <h2 className="text-xl font-black text-slate-800 tracking-tight">Website Settings</h2>
-                </div>
-
-                <div className="space-y-2">
-                    <button
-                        onClick={() => setActiveTab("banner")}
-                        className={`w-full flex items-center gap-3 px-6 py-4 rounded-2xl font-bold transition-all duration-300 ${activeTab === "banner"
-                            ? "bg-white text-blue-600 shadow-md shadow-blue-600/5 translate-x-1"
-                            : "text-slate-400 hover:bg-white hover:text-slate-600"
-                            }`}
-                    >
-                        <Monitor className="w-5 h-5" />
-                        <span>Homepage Banner</span>
-                    </button>
-                    <button
-                        onClick={() => setActiveTab("popup")}
-                        className={`w-full flex items-center gap-3 px-6 py-4 rounded-2xl font-bold transition-all duration-300 ${activeTab === "popup"
-                            ? "bg-white text-blue-600 shadow-md shadow-blue-600/5 translate-x-1"
-                            : "text-slate-400 hover:bg-white hover:text-slate-600"
-                            }`}
-                    >
-                        <Layout className="w-5 h-5" />
-                        <span>Featured Popup</span>
-                    </button>
-                </div>
-
-            </div>
-
             {/* Content Area */}
-            <div className="flex-1 p-10 overflow-y-auto">
+            <div className="flex-1 p-10 overflow-y-auto w-full">
                 {activeTab === "banner" && (
                     <div className="animate-in fade-in slide-in-from-right duration-500">
                         <div className="flex items-center justify-between mb-8">
@@ -347,7 +429,174 @@ export default function SettingsPage() {
                         </div>
                     </div>
                 )}
+
+                {activeTab === "news" && (
+                    <div className="animate-in fade-in slide-in-from-right duration-500">
+                        <div className="flex items-center justify-between mb-8">
+                            <h1 className="text-2xl font-black text-slate-800 tracking-tight">Latest News</h1>
+                            <span className="px-4 py-1.5 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest rounded-full">{news.length} Published</span>
+                        </div>
+
+                        {/* Add News Form */}
+                        <div className="bg-slate-50/50 border border-slate-100 p-8 rounded-[24px] mb-12">
+                            <form onSubmit={addNews} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">News Title</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Enter headline"
+                                        value={newsForm.title}
+                                        onChange={(e) => setNewsForm({ ...newsForm, title: e.target.value })}
+                                        className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all font-medium text-slate-700"
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Cover Image (Optional)</label>
+                                    <div className="relative group">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => setNewsForm({ ...newsForm, image: e.target.files ? e.target.files[0] : null })}
+                                            className="hidden"
+                                            id="news-file"
+                                        />
+                                        <label htmlFor="news-file" className="flex items-center gap-3 w-full p-4 bg-white border border-slate-200 border-dashed rounded-2xl cursor-pointer hover:bg-white hover:border-blue-400 transition-all font-medium text-slate-500">
+                                            <div className="bg-blue-50 p-2 rounded-lg group-hover:bg-blue-100 transition-colors">
+                                                <UploadCloud className="w-5 h-5 text-blue-600" />
+                                            </div>
+                                            <span className="truncate">{newsForm.image ? newsForm.image.name : "Select JPG / PNG"}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div className="space-y-2 md:col-span-2">
+                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">News Content</label>
+                                    <textarea
+                                        placeholder="Enter full news content..."
+                                        value={newsForm.content}
+                                        onChange={(e) => setNewsForm({ ...newsForm, content: e.target.value })}
+                                        rows={4}
+                                        className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all font-medium text-slate-700"
+                                    />
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="md:col-span-2 bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl transition-all shadow-lg shadow-blue-600/20 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 mt-2"
+                                >
+                                    {loading ? "Publishing..." : <><PlusCircle className="w-5 h-5" /> Publish News</>}
+                                </button>
+                            </form>
+                        </div>
+
+                        {/* News List */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {news.map((item) => (
+                                <div key={item.id} className="group relative flex flex-col gap-4 bg-white border border-slate-100 p-6 rounded-[24px] hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300">
+                                    {item.image_url && (
+                                        <div className="relative w-full h-40 rounded-xl overflow-hidden shadow-inner shrink-0 bg-slate-50">
+                                            <img src={item.image_url} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                        </div>
+                                    )}
+                                    <div className="flex-1 space-y-2">
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{new Date(item.created_at).toLocaleDateString()}</p>
+                                        <h3 className="text-lg font-black text-slate-800 tracking-tight line-clamp-1">{item.title}</h3>
+                                        <p className="text-slate-500 font-medium leading-relaxed text-sm line-clamp-2">{item.content}</p>
+                                        <div className="flex items-center justify-end pt-2">
+                                            <button
+                                                onClick={() => deleteNews(item.id)}
+                                                className="w-10 h-10 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                                            >
+                                                <Trash2 className="w-5 h-5" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === "accreditations" && (
+                    <div className="animate-in fade-in slide-in-from-right duration-500">
+                        <div className="flex items-center justify-between mb-8">
+                            <h1 className="text-2xl font-black text-slate-800 tracking-tight">Accreditations</h1>
+                            <span className="px-4 py-1.5 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest rounded-full">{accreditations.length} Active</span>
+                        </div>
+
+                        {/* Add Accreditation Form */}
+                        <div className="bg-slate-50/50 border border-slate-100 p-8 rounded-[24px] mb-12">
+                            <form onSubmit={addAccreditation} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Title</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Enter title"
+                                        value={accreditationsForm.title}
+                                        onChange={(e) => setAccreditationsForm({ ...accreditationsForm, title: e.target.value })}
+                                        className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all font-medium text-slate-700"
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Logo</label>
+                                    <div className="relative group">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => setAccreditationsForm({ ...accreditationsForm, image: e.target.files ? e.target.files[0] : null })}
+                                            className="hidden"
+                                            id="accreditation-file"
+                                            required
+                                        />
+                                        <label htmlFor="accreditation-file" className="flex items-center gap-3 w-full p-4 bg-white border border-slate-200 border-dashed rounded-2xl cursor-pointer hover:bg-white hover:border-blue-400 transition-all font-medium text-slate-500">
+                                            <div className="bg-blue-50 p-2 rounded-lg group-hover:bg-blue-100 transition-colors">
+                                                <UploadCloud className="w-5 h-5 text-blue-600" />
+                                            </div>
+                                            <span className="truncate">{accreditationsForm.image ? accreditationsForm.image.name : "Select JPG / PNG"}</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="md:col-span-2 bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-2xl transition-all shadow-lg shadow-blue-600/20 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 mt-2"
+                                >
+                                    {loading ? "Uploading..." : <><PlusCircle className="w-5 h-5" /> Push to Production</>}
+                                </button>
+                            </form>
+                        </div>
+
+                        {/* Accreditations List */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {accreditations.map((item) => (
+                                <div key={item.id} className="group flex flex-col items-center gap-4 bg-white border border-slate-100 p-5 rounded-[24px] hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300">
+                                    <div className="relative h-24 w-full rounded-xl overflow-hidden shadow-sm shrink-0 flex items-center justify-center bg-slate-50">
+                                        <img src={item.image_url} alt={item.title} className="max-w-full max-h-full object-contain p-2 group-hover:scale-110 transition-transform duration-700" />
+                                    </div>
+                                    <div className="flex w-full items-center justify-between mt-2">
+                                        <h3 className="font-black text-slate-800 text-sm tracking-tight truncate flex-1">{item.title}</h3>
+                                        <button
+                                            onClick={() => deleteAccreditation(item.id)}
+                                            className="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all ml-2 shrink-0"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
+    );
+}
+
+export default function SettingsPage() {
+    return (
+        <Suspense fallback={<div className="p-10 text-slate-400">Loading settings...</div>}>
+            <SettingsContent />
+        </Suspense>
     );
 }

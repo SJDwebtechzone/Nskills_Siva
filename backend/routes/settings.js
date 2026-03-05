@@ -151,4 +151,119 @@ router.put("/popups/:id/status", async (req, res) => {
     }
 });
 
+// --- Latest News ---
+
+// Multer for news images
+const newsStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const dir = "uploads/news/";
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        cb(null, dir);
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + path.extname(file.originalname));
+    },
+});
+const uploadNews = multer({ storage: newsStorage });
+
+// Get all news
+router.get("/news", async (req, res) => {
+    try {
+        const result = await pool.query("SELECT * FROM latest_news ORDER BY created_at DESC");
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server Error");
+    }
+});
+
+// Add a news item
+router.post("/news", uploadNews.single("image"), async (req, res) => {
+    try {
+        const { title, content } = req.body;
+        const image_url = req.file ? `http://localhost:5000/uploads/news/${req.file.filename}` : "";
+        const result = await pool.query(
+            "INSERT INTO latest_news (title, content, image_url) VALUES ($1, $2, $3) RETURNING *",
+            [title, content, image_url]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server Error");
+    }
+});
+
+// Delete a news item
+router.delete("/news/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const news = await pool.query("SELECT image_url FROM latest_news WHERE id = $1", [id]);
+        if (news.rows.length > 0 && news.rows[0].image_url) {
+            const filename = news.rows[0].image_url.split('/').pop();
+            const filepath = path.join(__dirname, '../uploads/news', filename);
+            if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
+        }
+        await pool.query("DELETE FROM latest_news WHERE id = $1", [id]);
+        res.json({ message: "News deleted" });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server Error");
+    }
+});
+
+// --- Accreditations ---
+const accreditationsStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const dir = "uploads/accreditations/";
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        cb(null, dir);
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + path.extname(file.originalname));
+    },
+});
+const uploadAccreditations = multer({ storage: accreditationsStorage });
+
+router.get("/accreditations", async (req, res) => {
+    try {
+        const result = await pool.query("SELECT * FROM accreditations ORDER BY created_at DESC");
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server Error");
+    }
+});
+
+router.post("/accreditations", uploadAccreditations.single("image"), async (req, res) => {
+    try {
+        const { title } = req.body;
+        const image_url = req.file ? `http://localhost:5000/uploads/accreditations/${req.file.filename}` : "";
+        const result = await pool.query(
+            "INSERT INTO accreditations (title, image_url) VALUES ($1, $2) RETURNING *",
+            [title, image_url]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server Error");
+    }
+});
+
+router.delete("/accreditations/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const item = await pool.query("SELECT image_url FROM accreditations WHERE id = $1", [id]);
+        if (item.rows.length > 0 && item.rows[0].image_url) {
+            const filename = item.rows[0].image_url.split('/').pop();
+            const filepath = path.join(__dirname, '../uploads/accreditations', filename);
+            if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
+        }
+        await pool.query("DELETE FROM accreditations WHERE id = $1", [id]);
+        res.json({ message: "Deleted" });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server Error");
+    }
+});
+
 module.exports = router;
