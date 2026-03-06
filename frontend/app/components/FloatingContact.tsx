@@ -9,10 +9,14 @@ const FloatingContact = () => {
     const whatsappNumber = "918778085752"; // Assuming India country code +91
     const whatsappMessage = "Hello NTSC! I would like to know more.";
 
-    // Do not show on login or dashboard pages
-    if (pathname && (pathname.startsWith("/login") || pathname.startsWith("/dashboard"))) {
-        return null;
-    }
+    // Do not show on restricted pages
+    const isRestricted = pathname ? (
+        pathname.toLowerCase().startsWith("/login") ||
+        pathname.toLowerCase().startsWith("/dashboard") ||
+        pathname.toLowerCase().startsWith("/admin")
+    ) : false;
+
+    if (isRestricted) return null;
 
     return (
         <div className="fixed left-4 bottom-8 z-50 flex flex-col gap-4">

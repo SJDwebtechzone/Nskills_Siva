@@ -29,8 +29,8 @@ router.get("/banners", async (req, res) => {
         const result = await pool.query("SELECT * FROM banners ORDER BY order_index ASC");
         res.json(result.rows);
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send("Server Error");
+        console.error("[banners] DB error:", err.message);
+        res.json([]); // Return empty array so frontend degrades gracefully
     }
 });
 
@@ -98,8 +98,8 @@ router.get("/popups", async (req, res) => {
         const result = await pool.query("SELECT * FROM popups ORDER BY created_at DESC");
         res.json(result.rows);
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send("Server Error");
+        console.error("[popups] DB error:", err.message);
+        res.json([]); // Return empty array so frontend degrades gracefully
     }
 });
 
@@ -172,8 +172,8 @@ router.get("/news", async (req, res) => {
         const result = await pool.query("SELECT * FROM latest_news ORDER BY created_at DESC");
         res.json(result.rows);
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send("Server Error");
+        console.error("[news] DB error:", err.message);
+        res.json([]); // Return empty array so frontend degrades gracefully
     }
 });
 
@@ -229,8 +229,8 @@ router.get("/accreditations", async (req, res) => {
         const result = await pool.query("SELECT * FROM accreditations ORDER BY created_at DESC");
         res.json(result.rows);
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send("Server Error");
+        console.error("[accreditations] DB error:", err.message);
+        res.json([]); // Return empty array so frontend degrades gracefully
     }
 });
 

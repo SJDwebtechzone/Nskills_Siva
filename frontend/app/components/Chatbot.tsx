@@ -18,6 +18,8 @@ import {
     Sparkles,
 } from "lucide-react";
 
+import { usePathname } from "next/navigation";
+
 interface Course {
     category: string;
     keywords: string[];
@@ -112,7 +114,7 @@ interface Message {
     isProactive?: boolean;
 }
 
-const Chatbot: React.FC = () => {
+const ChatbotContent: React.FC = () => {
     const [isOpen, setIsOpen] = useState<boolean>(false);
     const [messages, setMessages] = useState<Message[]>([
         {
@@ -125,6 +127,36 @@ const Chatbot: React.FC = () => {
     const [isTyping, setIsTyping] = useState<boolean>(false);
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
     const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    const [buttonTextState, setButtonTextState] = useState<number>(0);
+    const [isBlinking, setIsBlinking] = useState<boolean>(true);
+
+    useEffect(() => {
+        if (buttonTextState === 0) {
+            const timer = setTimeout(() => {
+                setButtonTextState(1);
+            }, 3000);
+            return () => clearTimeout(timer);
+        } else if (buttonTextState === 1) {
+            const timer = setTimeout(() => {
+                setButtonTextState(2);
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [buttonTextState]);
+
+    const getButtonText = () => {
+        if (buttonTextState === 0) return "Welcome to N-Skill";
+        if (buttonTextState === 1) return "How can I help you?";
+        return "Looking for a job? 👋";
+    };
+
+    // Only allow opening the chatbot if we're on the last message or user overrides it
+    const handleButtonClick = () => {
+        if (buttonTextState === 2 || isOpen) {
+            setIsOpen(!isOpen);
+        }
+    };
 
     useEffect(() => {
         if (isOpen) {
@@ -346,22 +378,68 @@ const Chatbot: React.FC = () => {
                 )}
             </AnimatePresence>
 
-            <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setIsOpen(!isOpen)}
-                className="bg-[#0b1f3a] text-white px-7 py-4 rounded-full shadow-2xl flex items-center gap-3 border-2 border-white/20 backdrop-blur-sm"
-            >
-                {isOpen ? <X size={24} /> : (
-                    <div className="relative">
-                        <Headphones size={24} />
-                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white" />
-                    </div>
-                )}
-                {!isOpen && <span className="font-bold tracking-tight">Career Support</span>}
-            </motion.button>
+            {/* Static Chatbot Trigger Unit */}
+            {!isOpen && (
+                <div className="flex flex-col items-end gap-2 group">
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={buttonTextState}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            onClick={handleButtonClick}
+                            className="bg-white text-[#0b1f3a] px-5 py-3 rounded-2xl rounded-br-none shadow-xl border border-blue-100 flex items-center gap-3 relative cursor-pointer select-none"
+                        >
+                            <Sparkles className="text-blue-500 shrink-0" size={18} />
+                            <span className="font-bold text-sm tracking-tight whitespace-nowrap">
+                                {getButtonText()}
+                            </span>
+                            <div className="absolute right-0 bottom-[-8px] w-0 h-0 border-l-[12px] border-l-transparent border-t-[12px] border-t-white" />
+                        </motion.div>
+                    </AnimatePresence>
+
+                    <button
+                        onClick={handleButtonClick}
+                        className="w-16 h-16 rounded-full flex items-center justify-center shadow-2xl border-2 border-white/50 backdrop-blur-md bg-gradient-to-br from-[#0b1f3a] to-[#2563eb] text-white cursor-pointer relative transition-transform hover:scale-105 active:scale-95"
+                    >
+                        <div className="relative shrink-0">
+                            <Headphones size={28} />
+                            <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white" />
+                        </div>
+                    </button>
+                </div>
+            )}
+
+            {/* Back button when open */}
+            {isOpen && (
+                <motion.button
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    whileHover={{ scale: 1.1, rotate: 90 }}
+                    onClick={() => setIsOpen(false)}
+                    className="w-14 h-14 bg-white text-[#0b1f3a] rounded-full flex items-center justify-center shadow-2xl border-2 border-blue-500 z-[10000]"
+                >
+                    <X size={24} />
+                </motion.button>
+            )}
         </div>
     );
+};
+
+const Chatbot: React.FC = () => {
+    const pathname = usePathname();
+
+    // Switcher logic: Check for restricted routes before rendering the logic-heavy component
+    const isRestricted = pathname ? (
+        pathname.toLowerCase().startsWith("/dashboard") ||
+        pathname.toLowerCase().startsWith("/login") ||
+        pathname.toLowerCase().startsWith("/admin")
+    ) : false;
+
+    if (isRestricted) return null;
+
+    return <ChatbotContent />;
 };
 
 export default Chatbot;

@@ -30,6 +30,20 @@ router.post("/", async (req, res) => {
 
         let botText = response.data;
 
+        if (typeof botText === 'string') {
+            const splitTokens = [
+                "**Support Pollinations.AI:**",
+                "Powered by Pollinations.AI"
+            ];
+            for (const token of splitTokens) {
+                if (botText.includes(token)) {
+                    botText = botText.split(token)[0];
+                }
+            }
+            // Clean up any trailing horizontal rules (---) left before the ad block
+            botText = botText.replace(/---+\s*$/, "").trim();
+        }
+
         res.json({ response: botText });
     } catch (error) {
         console.error("AI Error:", error.message);
