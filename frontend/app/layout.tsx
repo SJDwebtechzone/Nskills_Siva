@@ -6,6 +6,7 @@ import Footer from "./components/footer";
 import CoursePopup from "./components/CoursePopup";
 import Chatbot from "./components/Chatbot";
 import FloatingContact from "./components/FloatingContact";
+import { AuthProvider } from "@/app/context/AuthContext"; // ✅ ADDED
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,13 +31,15 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="antialiased">
-        <Navbar />
-        <main>{children}</main>
-        <Footer />
-        <CoursePopup />
-        <Chatbot />
-        <FloatingContact />
+        <AuthProvider>          {/* ✅ ADDED — wraps entire app */}
+          <Navbar />
+          <main>{children}</main>
+          <Footer />
+          <CoursePopup />
+          <Chatbot />
+          <FloatingContact />
+        </AuthProvider>          {/* ✅ ADDED */}
       </body>
-    </html>
+  </html>
   );
 }

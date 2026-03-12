@@ -21,12 +21,25 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
+// --- Popups Video Storage ---
+const popupStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const dir = "uploads/popups/";
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        cb(null, dir);
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + path.extname(file.originalname));
+    },
+});
+const uploadPopup = multer({ storage: popupStorage });
+
 // --- Banners ---
 
 // Get all banners
 router.get("/banners", async (req, res) => {
     try {
-        const result = await pool.query("SELECT * FROM banners ORDER BY order_index ASC");
+        const result = await pool.query("SELECT * FROM banners ORDER BY display_order ASC");
         res.json(result.rows);
     } catch (err) {
         console.error("[banners] DB error:", err.message);
@@ -37,12 +50,12 @@ router.get("/banners", async (req, res) => {
 // Add a banner with image upload
 router.post("/banners", upload.single("image"), async (req, res) => {
     try {
-        const { title, order_index } = req.body;
+        const { title, display_order } = req.body;
         const image_url = req.file ? `http://localhost:5000/uploads/banners/${req.file.filename}` : "";
 
         const result = await pool.query(
-            "INSERT INTO banners (image_url, title, order_index) VALUES ($1, $2, $3) RETURNING *",
-            [image_url, title, order_index || 0]
+            "INSERT INTO banners (image_url, title, display_order) VALUES ($1, $2, $3) RETURNING *",
+            [image_url, title, display_order || 0]
         );
         res.json(result.rows[0]);
     } catch (err) {
@@ -95,7 +108,7 @@ router.put("/banners/:id/status", async (req, res) => {
 // Get all popups
 router.get("/popups", async (req, res) => {
     try {
-        const result = await pool.query("SELECT * FROM popups ORDER BY created_at DESC");
+        const result = await pool.query("SELECT id, image_url, video_url, title, content as description, link_url as course_id, is_active, manual_override, placement FROM popups ORDER BY created_at DESC");
         res.json(result.rows);
     } catch (err) {
         console.error("[popups] DB error:", err.message);
@@ -103,13 +116,15 @@ router.get("/popups", async (req, res) => {
     }
 });
 
-// Add a popup
-router.post("/popups", async (req, res) => {
+// Add a popup with video upload
+router.post("/popups", uploadPopup.single("video"), async (req, res) => {
     try {
-        const { image_url, title, description, course_id } = req.body;
+        const { title, description, course_id, manual_override, placement } = req.body;
+        const video_url = req.file ? `http://localhost:5000/uploads/popups/${req.file.filename}` : "";
+        
         const result = await pool.query(
-            "INSERT INTO popups (image_url, title, description, course_id) VALUES ($1, $2, $3, $4) RETURNING *",
-            [image_url, title, description, course_id]
+            "INSERT INTO popups (video_url, title, content, link_url, manual_override, placement) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, video_url, title, content as description, link_url as course_id, is_active, manual_override, placement",
+            [video_url, title, description, course_id, manual_override || false, placement || "Intro"]
         );
         res.json(result.rows[0]);
     } catch (err) {
@@ -122,6 +137,12 @@ router.post("/popups", async (req, res) => {
 router.delete("/popups/:id", async (req, res) => {
     try {
         const { id } = req.params;
+        const popup = await pool.query("SELECT video_url FROM popups WHERE id = $1", [id]);
+        if (popup.rows.length > 0 && popup.rows[0].video_url) {
+            const filename = popup.rows[0].video_url.split('/').pop();
+            const filepath = path.join(__dirname, '../uploads/popups', filename);
+            if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
+        }
         await pool.query("DELETE FROM popups WHERE id = $1", [id]);
         res.json({ message: "Popup deleted" });
     } catch (err) {
@@ -143,6 +164,27 @@ router.put("/popups/:id/status", async (req, res) => {
         const result = await pool.query(
             "UPDATE popups SET is_active = $1 WHERE id = $2 RETURNING *",
             [is_active, id]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server Error");
+    }
+});
+
+// Update manual override (only one override at a time)
+router.put("/popups/:id/override", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { manual_override } = req.body;
+
+        if (manual_override) {
+            await pool.query("UPDATE popups SET manual_override = FALSE");
+        }
+
+        const result = await pool.query(
+            "UPDATE popups SET manual_override = $1 WHERE id = $2 RETURNING *",
+            [manual_override, id]
         );
         res.json(result.rows[0]);
     } catch (err) {
@@ -226,7 +268,7 @@ const uploadAccreditations = multer({ storage: accreditationsStorage });
 
 router.get("/accreditations", async (req, res) => {
     try {
-        const result = await pool.query("SELECT * FROM accreditations ORDER BY created_at DESC");
+        const result = await pool.query("SELECT id, name as title, logo_url as image_url, created_at FROM accreditations ORDER BY created_at DESC");
         res.json(result.rows);
     } catch (err) {
         console.error("[accreditations] DB error:", err.message);
@@ -236,11 +278,11 @@ router.get("/accreditations", async (req, res) => {
 
 router.post("/accreditations", uploadAccreditations.single("image"), async (req, res) => {
     try {
-        const { title } = req.body;
+        const { title, organization } = req.body;
         const image_url = req.file ? `http://localhost:5000/uploads/accreditations/${req.file.filename}` : "";
         const result = await pool.query(
-            "INSERT INTO accreditations (title, image_url) VALUES ($1, $2) RETURNING *",
-            [title, image_url]
+            "INSERT INTO accreditations (name, logo_url, organization) VALUES ($1, $2, $3) RETURNING id, name as title, logo_url as image_url, created_at",
+            [title, image_url, organization || 'N/A']
         );
         res.json(result.rows[0]);
     } catch (err) {
@@ -252,7 +294,7 @@ router.post("/accreditations", uploadAccreditations.single("image"), async (req,
 router.delete("/accreditations/:id", async (req, res) => {
     try {
         const { id } = req.params;
-        const item = await pool.query("SELECT image_url FROM accreditations WHERE id = $1", [id]);
+        const item = await pool.query("SELECT logo_url as image_url FROM accreditations WHERE id = $1", [id]);
         if (item.rows.length > 0 && item.rows[0].image_url) {
             const filename = item.rows[0].image_url.split('/').pop();
             const filepath = path.join(__dirname, '../uploads/accreditations', filename);

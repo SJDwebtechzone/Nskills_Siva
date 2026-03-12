@@ -4,15 +4,18 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { X } from "lucide-react";
 
-const API_BASE_URL = "http://localhost:5000/api/settings";
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/settings`;
 
 interface Popup {
     id: number;
     image_url: string;
+    video_url: string;
     title: string;
     description: string;
     course_id: string;
     is_active: boolean;
+    manual_override: boolean;
+    placement: string;
 }
 
 export default function CoursePopup() {
@@ -26,7 +29,8 @@ export default function CoursePopup() {
     const fetchActivePopup = async () => {
         try {
             const res = await axios.get(`${API_BASE_URL}/popups`);
-            const active = res.data.find((p: Popup) => p.is_active);
+            // Prioritize manual override, then active status
+            const active = res.data.find((p: Popup) => p.manual_override) || res.data.find((p: Popup) => p.is_active);
             if (active) {
                 setPopup(active);
                 // Show after 3 seconds
@@ -49,10 +53,22 @@ export default function CoursePopup() {
                     <X size={24} />
                 </button>
 
-                <div className="relative h-64">
-                    <img src={popup.image_url} alt={popup.title} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-8 text-white">
-                        <h2 className="text-3xl font-black mb-2">{popup.title}</h2>
+                <div className="relative h-64 bg-slate-900 border-b border-white/10">
+                    {popup.video_url ? (
+                        <video 
+                            src={popup.video_url} 
+                            className="w-full h-full object-cover" 
+                            autoPlay 
+                            loop 
+                            muted 
+                            playsInline 
+                        />
+                    ) : (
+                        <img src={popup.image_url} alt={popup.title} className="w-full h-full object-cover" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-8 text-white">
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 mb-2">{popup.placement || 'Featured'}</span>
+                        <h2 className="text-3xl font-black mb-0 tracking-tight">{popup.title}</h2>
                     </div>
                 </div>
 

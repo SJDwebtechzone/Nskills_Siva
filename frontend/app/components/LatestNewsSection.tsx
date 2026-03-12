@@ -20,7 +20,7 @@ const LatestNewsSection = () => {
     const [isHovered, setIsHovered] = useState(false);
 
     useEffect(() => {
-        fetch("http://localhost:5000/api/settings/news")
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/settings/news`)
             .then((res) => res.json())
             .then((data) => setNews(Array.isArray(data) ? data : []))
             .catch(() => setNews([]));

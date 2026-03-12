@@ -23,11 +23,16 @@ const AdminLogin = () => {
 
         setLoading(true);
         try {
-            const res = await axios.post("http://localhost:5000/api/login", {
+            const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
                 email,
                 password
             });
-            localStorage.setItem("token", res.data.token);
+
+            // ✅ FIXED: Save token + user + permissions (not just token)
+            localStorage.setItem("token",       res.data.token);
+            localStorage.setItem("user",        JSON.stringify(res.data.user));
+            localStorage.setItem("permissions", JSON.stringify(res.data.permissions));
+
             router.push("/dashboard");
         } catch (err: any) {
             console.error(err);
@@ -37,6 +42,7 @@ const AdminLogin = () => {
         }
     };
 
+    // ── UI is 100% unchanged from your original ──────────────────
     return (
         <div className="min-h-screen bg-[#0b1f3a] flex items-center justify-center px-4">
             <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md animate-in fade-in zoom-in duration-500 border border-white/10">
