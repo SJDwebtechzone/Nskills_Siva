@@ -53,6 +53,7 @@ import {
   RefreshCw,
   Wallet,
   Eye,
+  Image,
 } from "lucide-react";
 
 interface DashboardLayoutProps {
@@ -148,6 +149,10 @@ const ntscManagementItems = [
   { name: "Monitor Student Changes and Approval", path: "/dashboard/ntsc-management/monitor-approvals", icon: Eye },
 ];
 
+const backgroundImagesItems = [
+  { name: "Background Images", path: "/dashboard/background-images", icon: Image },
+];
+
 function DashboardLayoutContent({ children }: DashboardLayoutProps) {
   const pathname     = usePathname();
   const searchParams = useSearchParams();
@@ -197,6 +202,10 @@ function DashboardLayoutContent({ children }: DashboardLayoutProps) {
 
   const [isClassStatusOpen, setIsClassStatusOpen] = useState(
     pathname.includes("/class-status")
+  );
+
+  const [isBackgroundImagesOpen, setIsBackgroundImagesOpen] = useState(
+    pathname.includes("/background-images")
   );
 
   // ✅ Redirect if not logged in
@@ -584,42 +593,79 @@ function DashboardLayoutContent({ children }: DashboardLayoutProps) {
             )}
           </div>
 
-          {/* ✅ NTSC Management (No sub-items yet) */}
-          <div className="space-y-1 mt-1">
-            <button
-              onClick={() => setIsNTSCManagementOpen(!isNTSCManagementOpen)}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 group ${
-                isNTSCManagementOpen
-                  ? "text-white bg-white/5"
-                  : "text-gray-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <ShieldCheck className={`w-5 h-5 ${isNTSCManagementOpen ? "text-blue-400" : "group-hover:text-blue-400"}`} />
-                <span className="font-medium">NTSC Management</span>
-              </div>
-              {isNTSCManagementOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            </button>
-            {isNTSCManagementOpen && (
-              <ul className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-4 py-1">
-                {ntscManagementItems.map((item) => (
-                  <li key={item.path}>
-                    <Link
-                      href={item.path!}
-                      className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all duration-300 ${
-                        pathname === item.path
-                          ? "text-blue-400 font-bold bg-blue-400/10"
-                          : "text-gray-500 hover:text-white hover:bg-white/5"
-                      }`}
-                    >
-                      <item.icon className="w-4 h-4" />
-                      <span>{item.name}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+            {/* ✅ NTSC Management */}
+            <div className="space-y-1 mt-1">
+              <button
+                onClick={() => setIsNTSCManagementOpen(!isNTSCManagementOpen)}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 group ${
+                  isNTSCManagementOpen
+                    ? "text-white bg-white/5"
+                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <ShieldCheck className={`w-5 h-5 ${isNTSCManagementOpen ? "text-blue-400" : "group-hover:text-blue-400"}`} />
+                  <span className="font-medium">NTSC Management</span>
+                </div>
+                {isNTSCManagementOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isNTSCManagementOpen && (
+                <ul className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-4 py-1">
+                  {ntscManagementItems.map((item) => (
+                    <li key={item.path}>
+                      <Link
+                        href={item.path!}
+                        className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all duration-300 ${
+                          pathname === item.path
+                            ? "text-blue-400 font-bold bg-blue-400/10"
+                            : "text-gray-500 hover:text-white hover:bg-white/5"
+                        }`}
+                      >
+                        <item.icon className="w-4 h-4" />
+                        <span>{item.name}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {/* ✅ Background Images */}
+            <div className="space-y-1 mt-1">
+              <button
+                onClick={() => setIsBackgroundImagesOpen(!isBackgroundImagesOpen)}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 group ${
+                  isBackgroundImagesOpen
+                    ? "text-white bg-white/5"
+                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Image className={`w-5 h-5 ${isBackgroundImagesOpen ? "text-blue-400" : "group-hover:text-blue-400"}`} />
+                  <span className="font-medium text-left">Background Images</span>
+                </div>
+                {isBackgroundImagesOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isBackgroundImagesOpen && (
+                <ul className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-4 py-1">
+                  {backgroundImagesItems.map((item) => (
+                    <li key={item.path}>
+                      <Link
+                        href={item.path!}
+                        className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all duration-300 ${
+                          pathname === item.path
+                            ? "text-blue-400 font-bold bg-blue-400/10"
+                            : "text-gray-500 hover:text-white hover:bg-white/5"
+                        }`}
+                      >
+                        <item.icon className="w-4 h-4" />
+                        <span>{item.name}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
         </nav>
 
         {/* ✅ Logout — calls AuthContext logout() */}
