@@ -1,0 +1,206 @@
+[
+  {
+    "column_name": "id",
+    "data_type": "integer"
+  },
+  {
+    "column_name": "enquiry_id",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "enquiry_date",
+    "data_type": "date"
+  },
+  {
+    "column_name": "mode_of_enquiry",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "student_name",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "gender",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "age",
+    "data_type": "integer"
+  },
+  {
+    "column_name": "dob",
+    "data_type": "date"
+  },
+  {
+    "column_name": "mobile_number",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "whatsapp_number",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "email_id",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "perm_address",
+    "data_type": "text"
+  },
+  {
+    "column_name": "perm_city",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "perm_state",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "perm_pin",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "curr_address",
+    "data_type": "text"
+  },
+  {
+    "column_name": "curr_city",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "curr_state",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "curr_pin",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "highest_qualification",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "year_of_passing",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "institution_name",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "career_objective",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "preferred_country",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "expected_salary",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "willing_to_work_all_india",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "work_experience",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "company_name",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "position",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "salary",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "location",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "skills_trade",
+    "data_type": "text"
+  },
+  {
+    "column_name": "father_name",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "mother_name",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "parent_contact",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "parent_occupation",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "referred_by",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "counsellor_name",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "counsellor_code",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "will_attend_test",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "course_interested",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "level_of_course",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "training_mode",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "batch_timing",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "counselling_date",
+    "data_type": "date"
+  },
+  {
+    "column_name": "counselling_done_by",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "interest_level",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "follow_up_date",
+    "data_type": "date"
+  },
+  {
+    "column_name": "remarks",
+    "data_type": "text"
+  },
+  {
+    "column_name": "created_at",
+    "data_type": "timestamp without time zone"
+  },
+  {
+    "column_name": "created_by_id",
+    "data_type": "integer"
+  }
+]

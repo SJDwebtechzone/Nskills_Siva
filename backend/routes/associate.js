@@ -313,10 +313,29 @@ router.post(
       const plainPwd    = generatePassword();
       const passwordHash = await bcrypt.hash(plainPwd, 10);
 
+      // 1. Update career_counsellors table
       await pool.query(
         "UPDATE career_counsellors SET password_hash = $1 WHERE id = $2",
         [passwordHash, assoc.id]
       );
+
+      // 2. Sync with users table for login
+      // Get Associate role id
+      const roleResult = await pool.query("SELECT id FROM roles WHERE name = $1", ["Associate"]);
+      const roleId = roleResult.rows[0]?.id;
+
+      if (roleId) {
+        await pool.query(
+          `INSERT INTO users (name, email, password, role_id, status)
+           VALUES ($1, $2, $3, $4, 'Active')
+           ON CONFLICT (email)
+           DO UPDATE SET
+             password = EXCLUDED.password,
+             role_id  = EXCLUDED.role_id,
+             status   = 'Active'`,
+          [assoc.full_name, assoc.email, passwordHash, roleId]
+        );
+      }
 
       res.json({
         message: "Credentials generated successfully.",
@@ -324,10 +343,6 @@ router.post(
       });
     } catch (err) {
       console.error("❌ POST /:id/credentials:", err.message);
-      if (err.code === "42703")
-        return res.status(500).json({
-          error: "Column missing. Run: ALTER TABLE career_counsellors ADD COLUMN IF NOT EXISTS password_hash TEXT;"
-        });
       res.status(500).json({ error: err.message });
     }
   }

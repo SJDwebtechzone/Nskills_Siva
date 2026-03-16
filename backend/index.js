@@ -70,6 +70,7 @@ const rolesRouter = require("./routes/roles");
 const settingsRoutes = require("./routes/settings");
 const chatRoutes = require("./routes/chat");
 const enquiriesRoutes = require("./routes/enquiries");
+const admissionsRoutes = require("./routes/admissions");
 
 const app  = express();
 const PORT = process.env.PORT || 5000;
@@ -88,6 +89,7 @@ app.use("/api/roles", rolesRouter);
 
 // app.use("/api/popups", popupsRoutes);
 app.use("/api/enquiries", enquiriesRoutes);
+app.use("/api/admissions", admissionsRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/chat", chatRoutes);
 

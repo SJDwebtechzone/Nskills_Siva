@@ -51,7 +51,9 @@ async function createAdmin() {
     // 4. Give Admin role ALL permissions
     const modules = [
       "Dashboard", "Associate", "Students", "Staff / Trainee",
-      "NTSC Admin", "Payments", "Manage Users", "Manage Roles"
+      "NTSC Admin", "Payments", "Manage Users", "Manage Roles",
+      "Associate Management", "Home", "Homepage Banner", "Feature Popup",
+      "Latest News", "Accreditions"
     ];
 
     for (const module of modules) {

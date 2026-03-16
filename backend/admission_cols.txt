@@ -1,0 +1,81 @@
+id | integer | nullable:NO
+enquiry_id | character varying | nullable:YES
+admission_date | date | nullable:YES
+full_name | character varying | nullable:NO
+gender | character varying | nullable:NO
+dob | date | nullable:NO
+age | character varying | nullable:NO
+aadhaar_number | character varying | nullable:NO
+passport_number | character varying | nullable:YES
+passport_validity | date | nullable:YES
+photo_url | text | nullable:YES
+mobile_number | character varying | nullable:NO
+alt_mobile_number | character varying | nullable:YES
+whatsapp_number | character varying | nullable:NO
+email_id | character varying | nullable:NO
+residential_address | text | nullable:NO
+city | character varying | nullable:NO
+state | character varying | nullable:NO
+pin_code | character varying | nullable:NO
+parent_name | character varying | nullable:NO
+relationship | character varying | nullable:NO
+parent_mobile | character varying | nullable:NO
+occupation | character varying | nullable:NO
+annual_income | character varying | nullable:YES
+highest_qualification | character varying | nullable:NO
+year_of_passing | character varying | nullable:NO
+institution_name | character varying | nullable:NO
+board_university | character varying | nullable:NO
+medium_of_study | character varying | nullable:NO
+technical_background | text | nullable:YES
+total_experience | character varying | nullable:YES
+industry_experience | text | nullable:YES
+skills_known | text | nullable:YES
+course_interested | character varying | nullable:NO
+course_level | character varying | nullable:NO
+mode_of_training | character varying | nullable:NO
+batch_preference | character varying | nullable:YES
+training_location | character varying | nullable:YES
+career_goal | character varying | nullable:NO
+preferred_country | character varying | nullable:YES
+expected_salary | character varying | nullable:YES
+willing_to_relocate | character varying | nullable:NO
+counsellor_name | character varying | nullable:NO
+counsellor_code | character varying | nullable:NO
+referral_source | character varying | nullable:NO
+counselling_date | date | nullable:NO
+course_name | character varying | nullable:NO
+course_fees | numeric | nullable:NO
+total_fees | numeric | nullable:NO
+paid_fees | numeric | nullable:NO
+payment_mode | character varying | nullable:NO
+payment_ref_no | character varying | nullable:YES
+payment_date | date | nullable:NO
+instalment_1 | numeric | nullable:YES
+instalment_2 | numeric | nullable:YES
+balance_amount | numeric | nullable:NO
+has_aadhaar_file | text | nullable:YES
+has_edu_certs_file | text | nullable:YES
+has_passport_file | text | nullable:YES
+has_resume_file | text | nullable:YES
+has_address_proof_file | text | nullable:YES
+has_photos_file | text | nullable:YES
+student_declaration | boolean | nullable:NO
+parent_declaration | boolean | nullable:NO
+placement_ack | boolean | nullable:NO
+overseas_disclaimer | boolean | nullable:YES
+discipline_ack | boolean | nullable:NO
+photo_consent | boolean | nullable:NO
+refund_policy_ack | boolean | nullable:NO
+data_privacy_ack | boolean | nullable:NO
+final_undertaking | boolean | nullable:NO
+emergency_contact_name | character varying | nullable:NO
+emergency_contact_number | character varying | nullable:NO
+emergency_authorized | boolean | nullable:NO
+admission_number | character varying | nullable:YES
+batch_allotted | character varying | nullable:YES
+verified_by | character varying | nullable:YES
+authorized_signature_by | character varying | nullable:YES
+status | character varying | nullable:YES
+created_at | timestamp without time zone | nullable:YES
+created_by_id | integer | nullable:YES

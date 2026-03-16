@@ -23,13 +23,15 @@ const AssociateLogin = () => {
 
         setLoading(true);
         try {
-            // Using the existing login API
-            const res = await axios.post("http://localhost:5000/api/login", {
-                email: username, // Assuming username field is used for email/ID
+            const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/auth/login`, {
+                email: username, 
                 password
             });
 
-            localStorage.setItem("token", res.data.token);
+            localStorage.setItem("token",       res.data.token);
+            localStorage.setItem("user",        JSON.stringify(res.data.user));
+            localStorage.setItem("permissions", JSON.stringify(res.data.permissions));
+            
             router.push("/dashboard");
         } catch (err: any) {
             console.error(err);

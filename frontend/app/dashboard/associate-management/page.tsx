@@ -1,104 +1,144 @@
+"use client";
+
 import Link from "next/link";
-import { ClipboardList, FileText, BookOpen, ArrowRight } from "lucide-react";
+import { 
+    ClipboardList, FileText, BookOpen, ArrowRight, 
+    LayoutDashboard, DollarSign, Users, Award 
+} from "lucide-react";
+import { motion } from "framer-motion";
 
 const sections = [
   {
-    title: "Enquiry Form",
-    description: "Record new associate enquiries, capture personal details, career goals, and course interests.",
-    href: "/dashboard/student-management/enquiry",
-    icon: ClipboardList,
-    color: "blue",
+    title: "Overview Dashboard",
+    description: "View your performance stats, enquiry counts, and recent referral activities at a glance.",
+    href: "/dashboard/associate-management/dashboard",
+    icon: LayoutDashboard,
     bg: "bg-blue-50",
     iconColor: "text-blue-600",
     border: "border-blue-100",
-    badge: "New",
+    badge: "Home",
+  },
+  {
+    title: "Student Enquiry",
+    description: "Record new student leads, capture personal details, and track initial course interest.",
+    href: "/dashboard/associate-management/enquiry",
+    icon: Users,
+    bg: "bg-purple-50",
+    iconColor: "text-purple-600",
+    border: "border-purple-100",
+    badge: "Process 1",
   },
   {
     title: "Admission Form",
-    description: "Process associate admission applications with all required documentation and course details.",
-    href: "/dashboard/student-management/admission",
+    description: "Convert enquiries into admissions once students clear their documentation and initial fees.",
+    href: "/dashboard/associate-management/admission",
     icon: FileText,
-    color: "emerald",
     bg: "bg-emerald-50",
     iconColor: "text-emerald-600",
     border: "border-emerald-100",
-    badge: null,
+    badge: "Process 2",
+  },
+  {
+    title: "Referral Tracking",
+    description: "Track your 10% referral points and commission status in real-time as payments clear.",
+    href: "/dashboard/associate-management/referral-tracking",
+    icon: DollarSign,
+    bg: "bg-amber-50",
+    iconColor: "text-amber-600",
+    border: "border-amber-100",
+    badge: "Earnings",
   },
 ];
 
-export default function StudentManagementPage() {
+export default function AssociateManagementLanding() {
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-          <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-600/20">
-            <BookOpen className="w-6 h-6 text-white" />
-          </div>
-          Associate Management
-        </h1>
-        <p className="text-slate-500 font-medium mt-2">
-          Manage associate enquiries, admissions, and records from one place.
-        </p>
+    <div className="space-y-10 pb-12">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="space-y-2">
+            <h1 className="text-4xl font-black text-slate-800 tracking-tight flex items-center gap-4">
+            <div className="w-14 h-14 bg-[#0b1f3a] rounded-[1.25rem] flex items-center justify-center shadow-2xl shadow-blue-900/20">
+                <Award className="w-7 h-7 text-blue-400" />
+            </div>
+            Associate Portal
+            </h1>
+            <p className="text-slate-500 font-bold ml-1 uppercase text-xs tracking-[0.2em]">
+            Authorized Partner & Referral Management Console
+            </p>
+        </div>
+        <div className="bg-white px-6 py-3 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+            <span className="text-xs font-black text-slate-700 uppercase tracking-widest">System Online</span>
+        </div>
       </div>
 
-      {/* Cards */}
+      {/* Grid of Section Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {sections.map((section) => {
+        {sections.map((section, idx) => {
           const Icon = section.icon;
           return (
-            <Link
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.1 }}
               key={section.href}
-              href={section.href}
-              className={`group relative bg-white border-2 ${section.border} rounded-3xl p-8 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 overflow-hidden`}
             >
-              {/* Background decoration */}
-              <div className={`absolute top-0 right-0 w-32 h-32 -mr-10 -mt-10 ${section.bg} rounded-full opacity-60 group-hover:scale-125 transition-transform duration-500`} />
+              <Link
+                href={section.href}
+                className={`group relative bg-white border-2 ${section.border} rounded-[2.5rem] p-10 hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] hover:-translate-y-2 transition-all duration-500 overflow-hidden flex flex-col h-full`}
+              >
+                {/* Background Decoration */}
+                <div className={`absolute top-0 right-0 w-48 h-48 -mr-16 -mt-16 ${section.bg} rounded-full opacity-40 group-hover:scale-150 transition-transform duration-700 blur-2xl`} />
 
-              {section.badge && (
-                <span className="absolute top-5 right-5 text-[10px] font-black bg-blue-600 text-white px-2.5 py-1 rounded-full tracking-wider uppercase z-10">
-                  {section.badge}
-                </span>
-              )}
+                <div className="flex justify-between items-start mb-8 relative z-10">
+                  <div className={`w-16 h-16 ${section.bg} rounded-3xl flex items-center justify-center group-hover:rotate-6 transition-transform duration-500`}>
+                    <Icon className={`w-8 h-8 ${section.iconColor}`} />
+                  </div>
+                  {section.badge && (
+                    <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${section.border} ${section.iconColor} bg-white shadow-sm`}>
+                      {section.badge}
+                   </span>
+                  )}
+                </div>
 
-              <div className={`w-14 h-14 ${section.bg} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 relative z-10`}>
-                <Icon className={`w-7 h-7 ${section.iconColor}`} />
-              </div>
+                <div className="flex-grow relative z-10">
+                  <h2 className="text-2xl font-black text-slate-800 mb-3 group-hover:text-blue-900 transition-colors">
+                    {section.title}
+                  </h2>
+                  <p className="text-slate-500 font-medium leading-relaxed text-sm">
+                    {section.description}
+                  </p>
+                </div>
 
-              <h2 className="text-xl font-black text-slate-800 mb-2 relative z-10">
-                {section.title}
-              </h2>
-              <p className="text-slate-500 text-sm font-medium leading-relaxed relative z-10">
-                {section.description}
-              </p>
-
-              <div className={`mt-6 flex items-center gap-2 text-sm font-bold ${section.iconColor} relative z-10 group-hover:gap-3 transition-all`}>
-                Open {section.title}
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </Link>
+                <div className={`mt-8 flex items-center gap-3 text-xs font-black uppercase tracking-widest ${section.iconColor} relative z-10 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-2`}>
+                  Access Module <ArrowRight className="w-4 h-4" />
+                </div>
+              </Link>
+            </motion.div>
           );
         })}
       </div>
 
-      {/* Info banner */}
-      <div className="bg-[#0b1f3a] rounded-3xl p-8 text-white flex flex-col md:flex-row items-start md:items-center gap-6 relative overflow-hidden">
-        <div className="absolute -top-8 -right-8 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl" />
-        <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center flex-shrink-0">
-          <BookOpen className="w-6 h-6 text-blue-300" />
+      {/* Informational Banner */}
+      <div className="bg-[#0b1f3a] rounded-[3rem] p-10 text-white relative overflow-hidden shadow-2xl mt-8">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        <div className="flex flex-col md:flex-row items-center gap-8 relative z-10 text-center md:text-left">
+            <div className="w-20 h-20 bg-white/10 rounded-[2rem] flex items-center justify-center backdrop-blur-md border border-white/20">
+                <BookOpen className="w-10 h-10 text-blue-300" />
+            </div>
+            <div className="flex-1">
+                <h3 className="text-2xl font-black tracking-tight mb-2">Automated Referral Engine</h3>
+                <p className="text-blue-200 font-medium leading-relaxed max-w-2xl">
+                    Every admission you process enters our dynamic tracking system. Once the student clears their total balance (₹0), our engine automatically credits **10% of the course fee** to your account.
+                </p>
+            </div>
+            <Link
+                href="/dashboard/associate-management/referral-tracking"
+                className="bg-white text-[#0b1f3a] font-black px-10 py-5 rounded-[2rem] text-xs uppercase tracking-[0.2em] shadow-2xl hover:scale-105 active:scale-95 transition-all whitespace-nowrap"
+            >
+                View Earnings
+            </Link>
         </div>
-        <div className="flex-1 relative z-10">
-          <h3 className="font-black text-lg">Associate Lifecycle</h3>
-          <p className="text-blue-200 text-sm font-medium mt-1">
-            Start with the <strong>Enquiry Form</strong> to capture initial interest, then move to the <strong>Admission Form</strong> once the associate is ready to enroll.
-          </p>
-        </div>
-        <Link
-          href="/dashboard/student-management/enquiry"
-          className="flex-shrink-0 bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-2xl text-sm transition-all shadow-lg shadow-blue-600/30 active:scale-95 relative z-10"
-        >
-          Start Enquiry
-        </Link>
       </div>
     </div>
   );

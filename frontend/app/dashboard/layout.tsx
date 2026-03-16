@@ -79,10 +79,10 @@ const websiteSettingsItems = [
 ];
 
 const associateManagementItems = [
-  { name: "Dashboard",             path: "/dashboard/associate-management/dashboard", icon: DashboardIcon },
-  { name: "Enquiry Form",          path: "/dashboard/associate-management/enquiry",   module: "Enquiry Form",   icon: ClipboardList },
-  { name: "Admission Form",        path: "/dashboard/associate-management/admission",  module: "Admission Form", icon: UserCheck      },
-  { name: "Referral Fee Tracking", path: "/dashboard/associate-management/referral-tracking", icon: DollarSign },
+  { name: "Dashboard",             path: "/dashboard/associate-management/dashboard", module: "Associate Management", icon: DashboardIcon },
+  { name: "Enquiry Form",          path: "/dashboard/associate-management/enquiry",   module: "Associate Management", icon: ClipboardList },
+  { name: "Admission Form",        path: "/dashboard/associate-management/admission",  module: "Associate Management", icon: UserCheck      },
+  { name: "Referral Fee Tracking", path: "/dashboard/associate-management/referral-tracking", module: "Associate Management", icon: DollarSign },
 ];
 
 const studentManagementItems = [
@@ -224,7 +224,7 @@ function DashboardLayoutContent({ children }: DashboardLayoutProps) {
   );
   // Student Management: show if specific permission exists OR if user has Dashboard access (admin)
   const visibleAssociateItems   = associateManagementItems.filter(
-    (i) => (i.module ? permissions?.[i.module]?.view : false) || showDashboard
+    (i) => permissions?.[i.module!]?.view || showDashboard
   );
 
   // ✅ Initials generator

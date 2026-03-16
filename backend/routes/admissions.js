@@ -1,0 +1,245 @@
+const express = require("express");
+const router = express.Router();
+const pool = require("../config/db");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+const { authMiddleware } = require("../middleware/authMiddleware");
+
+// Configure Multer for File Uploads
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadDir = 'uploads/admissions';
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        cb(null, `${Date.now()}-${file.originalname}`);
+    }
+});
+
+const upload = multer({ storage });
+
+const uploadFields = upload.fields([
+    { name: 'photo_file', maxCount: 1 },
+    { name: 'has_aadhaar_file', maxCount: 1 },
+    { name: 'has_edu_certs_file', maxCount: 1 },
+    { name: 'has_passport_file', maxCount: 1 },
+    { name: 'has_resume_file', maxCount: 1 },
+    { name: 'has_address_proof_file', maxCount: 1 },
+    { name: 'has_photos_file', maxCount: 1 },
+]);
+
+// Helper to add referral points
+const addReferralPoints = async (admissionData, associateId) => {
+    try {
+        const balance = parseFloat(admissionData.balance_amount) || 0;
+        const totalFees = parseFloat(admissionData.total_fees) || 0;
+
+        if (balance === 0 && totalFees > 0) {
+            // Check if points already awarded for this admission
+            const check = await pool.query("SELECT id FROM associate_referral_points WHERE admission_id = $1", [admissionData.id]);
+            if (check.rows.length === 0) {
+                const points = totalFees * 0.10; // 10%
+                await pool.query(
+                    `INSERT INTO associate_referral_points (associate_id, admission_id, student_name, course_fee, points_earned)
+                     VALUES ($1, $2, $3, $4, $5)`,
+                    [associateId, admissionData.id, admissionData.full_name, totalFees, points]
+                );
+                console.log(`✅ 10% Referral points (${points}) awarded to associate ${associateId} for student ${admissionData.full_name}`);
+            }
+        }
+    } catch (err) {
+        console.error("Error adding referral points:", err.message);
+    }
+};
+
+// Create new admission
+router.post("/", authMiddleware, uploadFields, async (req, res) => {
+    try {
+        const data = req.body;
+        const files = req.files;
+        const userId = req.user.id;
+
+        // Helpers
+        const toDate    = v => (v && v.trim() !== "" ? v : null);
+        const toNum     = v => (v !== undefined && v !== "" ? parseFloat(v) : 0);
+        const toInt     = v => (v !== undefined && v !== "" ? parseInt(v)   : null);
+        const toBool    = v => (v === true || v === "true");
+        const toStr     = v => (v !== undefined && v !== null ? v.toString() : null);
+
+        // Validation
+        const phoneRegex = /^\d{10}$/;
+        if (data.mobile_number && !phoneRegex.test(data.mobile_number)) {
+            return res.status(400).json({ error: "Mobile number must be exactly 10 digits" });
+        }
+        if (!data.full_name) return res.status(400).json({ error: "Full name is required" });
+
+        // Required fields defaults
+        const dob             = toDate(data.dob);
+        const payment_date    = toDate(data.payment_date);
+        const counselling_date= toDate(data.counselling_date);
+
+        if (!dob)             return res.status(400).json({ error: "Date of Birth is required" });
+        if (!payment_date)    return res.status(400).json({ error: "Payment date is required" });
+        if (!counselling_date)return res.status(400).json({ error: "Counselling date is required" });
+
+        // Helper to get file path
+        const getFilePath = (fieldName) => {
+            return files[fieldName] ? files[fieldName][0].path : null;
+        };
+
+        const query = `
+            INSERT INTO student_admissions (
+                enquiry_id, full_name, gender, dob, age, aadhaar_number, passport_number, passport_validity, photo_url,
+                mobile_number, alt_mobile_number, whatsapp_number, email_id, residential_address, city, state, pin_code,
+                parent_name, relationship, parent_mobile, occupation, annual_income,
+                highest_qualification, year_of_passing, institution_name, board_university, medium_of_study,
+                technical_background, total_experience, industry_experience, skills_known,
+                course_interested, course_level, mode_of_training, batch_preference, training_location,
+                career_goal, preferred_country, expected_salary, willing_to_relocate,
+                counsellor_name, counsellor_code, referral_source, counselling_date,
+                course_name, course_fees, total_fees, paid_fees, payment_mode, payment_ref_no, payment_date,
+                instalment_1, instalment_2, balance_amount,
+                has_aadhaar_file, has_edu_certs_file, has_passport_file, has_resume_file, has_address_proof_file, has_photos_file,
+                student_declaration, parent_declaration, placement_ack, overseas_disclaimer,
+                discipline_ack, photo_consent, refund_policy_ack, data_privacy_ack, final_undertaking,
+                emergency_contact_name, emergency_contact_number, emergency_authorized,
+                admission_number, batch_allotted, verified_by, authorized_signature_by,
+                created_by_id
+            ) VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+                $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
+                $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
+                $31, $32, $33, $34, $35, $36, $37, $38, $39, $40,
+                $41, $42, $43, $44, $45, $46, $47, $48, $49, $50,
+                $51, $52, $53, $54, $55, $56, $57, $58, $59, $60,
+                $61, $62, $63, $64, $65, $66, $67, $68, $69, $70,
+                $71, $72, $73, $74, $75, $76, $77
+            ) RETURNING *`;
+
+        const values = [
+            toStr(data.enquiry_id), data.full_name, data.gender, dob, toStr(data.age) || "0", data.aadhaar_number, toStr(data.passport_number), toDate(data.passport_validity), getFilePath('photo_file') || toStr(data.photo_url),
+            data.mobile_number, toStr(data.alt_mobile_number), data.whatsapp_number, data.email_id, data.residential_address, data.city, data.state, data.pin_code,
+            data.parent_name, data.relationship, data.parent_mobile, data.occupation, toStr(data.annual_income),
+            data.highest_qualification, data.year_of_passing, data.institution_name, data.board_university, data.medium_of_study,
+            toStr(data.technical_background), toStr(data.total_experience), toStr(data.industry_experience), toStr(data.skills_known),
+            data.course_interested, data.course_level || "Basic", data.mode_of_training || "Classroom", toStr(data.batch_preference), toStr(data.training_location),
+            data.career_goal, toStr(data.preferred_country), toStr(data.expected_salary), data.willing_to_relocate || "Yes",
+            data.counsellor_name, data.counsellor_code, data.referral_source || "Career Counsellor", counselling_date,
+            data.course_name, toNum(data.course_fees), toNum(data.total_fees), toNum(data.paid_fees), data.payment_mode || "Cash", toStr(data.payment_ref_no), payment_date,
+            toNum(data.instalment_1), toNum(data.instalment_2), toNum(data.balance_amount),
+            getFilePath('has_aadhaar_file'), getFilePath('has_edu_certs_file'), getFilePath('has_passport_file'), getFilePath('has_resume_file'), getFilePath('has_address_proof_file'), getFilePath('has_photos_file'),
+            toBool(data.student_declaration), toBool(data.parent_declaration), toBool(data.placement_ack), toBool(data.overseas_disclaimer),
+            toBool(data.discipline_ack), toBool(data.photo_consent), toBool(data.refund_policy_ack), toBool(data.data_privacy_ack), toBool(data.final_undertaking),
+            data.emergency_contact_name, data.emergency_contact_number, toBool(data.emergency_authorized),
+            toStr(data.admission_number), toStr(data.batch_allotted), toStr(data.verified_by), toStr(data.authorized_signature_by),
+            userId
+        ];
+
+        const result = await pool.query(query, values);
+        const newAdmission = result.rows[0];
+
+        // Process referral points if balance is 0
+        await addReferralPoints(newAdmission, userId);
+
+        res.status(201).json(newAdmission);
+    } catch (err) {
+        console.error("Admission submission error:", err.message);
+        if (err.code === '23505') {
+            return res.status(400).json({ error: "Admission already exists for this enquiry ID" });
+        }
+        res.status(500).json({ error: "Server Error", details: err.message });
+    }
+});
+
+// Update admission (e.g. fee payment)
+router.patch("/:id", authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const data = req.body;
+        
+        // Dynamic update query
+        const fields = Object.keys(data).filter(f => !['id', 'created_at', 'created_by_id'].includes(f));
+        if (fields.length === 0) return res.status(400).json({ error: "No fields to update" });
+
+        const setClause = fields.map((f, i) => `${f} = $${i + 1}`).join(", ");
+        const values = fields.map(f => data[f]);
+        values.push(id);
+
+        const result = await pool.query(
+            `UPDATE student_admissions SET ${setClause} WHERE id = $${values.length} RETURNING *`,
+            values
+        );
+
+        if (result.rows.length === 0) return res.status(404).json({ error: "Admission not found" });
+
+        const updated = result.rows[0];
+        
+        // Process referral points if balance hit 0
+        await addReferralPoints(updated, updated.created_by_id);
+
+        res.json(updated);
+    } catch (err) {
+        console.error("Update admission error:", err.message);
+        res.status(500).json({ error: "Server Error" });
+    }
+});
+
+// Get all admissions (Filtered by Associate)
+router.get("/", authMiddleware, async (req, res) => {
+    try {
+        let query = "SELECT * FROM student_admissions";
+        let params = [];
+
+        if (req.user.roleName === "Associate") {
+            query += " WHERE created_by_id = $1";
+            params.push(req.user.id);
+        }
+
+        query += " ORDER BY created_at DESC";
+        const result = await pool.query(query, params);
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: "Server Error" });
+    }
+});
+
+// Get referral points for an associate
+router.get("/referral-points/my", authMiddleware, async (req, res) => {
+    try {
+        const result = await pool.query(
+            "SELECT * FROM associate_referral_points WHERE associate_id = $1 ORDER BY created_at DESC",
+            [req.user.id]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: "Server Error" });
+    }
+});
+
+// Get admission by enquiry_id
+router.get("/by-enquiry/:enquiry_id", authMiddleware, async (req, res) => {
+    try {
+        const result = await pool.query("SELECT * FROM student_admissions WHERE enquiry_id = $1", [req.params.enquiry_id]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: "Admission not found" });
+        }
+        
+        // Ownership check
+        if (req.user.roleName === "Associate" && result.rows[0].created_by_id !== req.user.id) {
+            return res.status(403).json({ error: "Access denied" });
+        }
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: "Server Error" });
+    }
+});
+
+module.exports = router;
