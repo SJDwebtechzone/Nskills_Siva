@@ -2,12 +2,15 @@
 
 import { Phone } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { contactInfo } from "@/data/contactInfo";
+
 
 const FloatingContact = () => {
     const pathname = usePathname();
-    const phoneNumber = "8778085752";
-    const whatsappNumber = "918778085752"; // Assuming India country code +91
-    const whatsappMessage = "Hello NTSC! I would like to know more.";
+    const phoneNumber = contactInfo.whatsapp.display;
+    const whatsappNumber = contactInfo.whatsapp.number;
+    const whatsappMessage = contactInfo.whatsapp.message;
+
 
     // Do not show on restricted pages
     const isRestricted = pathname ? (

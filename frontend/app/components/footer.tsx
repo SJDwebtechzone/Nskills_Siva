@@ -11,6 +11,8 @@ import {
   Mail,
   Phone,
 } from "lucide-react";
+import { contactInfo } from "@/data/contactInfo";
+
 
 const Footer = () => {
   const pathname = usePathname();
@@ -73,22 +75,22 @@ const Footer = () => {
 
             <div className="space-y-4 text-[13px] leading-relaxed">
               <p>
-                361/3, Pillayar Kovil Street, Raghavendra Nagar, Irandamkattalai, Kovur, Chennai - 600 122. India
+                {contactInfo.address}
               </p>
 
+
               <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Phone size={14} className="text-[#fe2b54]" />
-                  <span>+91 - 98842 09774</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Phone size={14} className="text-[#fe2b54]" />
-                  <span>+91 - 80560 63023</span>
-                </div>
+                {contactInfo.phones.map((phone, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <Phone size={14} className="text-[#fe2b54]" />
+                    <span>{phone.value}</span>
+                  </div>
+                ))}
                 <div className="flex items-center gap-2">
                   <Mail size={14} className="text-[#fe2b54]" />
-                  <span>nskilltraining@gmail.com</span>
+                  <span>{contactInfo.email}</span>
                 </div>
+
               </div>
             </div>
           </div>

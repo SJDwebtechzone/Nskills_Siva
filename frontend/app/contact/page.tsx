@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { motion, Variants } from "framer-motion";
 import { MapPin, Phone, Mail, Send, RotateCcw, RefreshCw } from "lucide-react";
+import { contactInfo } from "@/data/contactInfo";
+
 
 const ContactPage: React.FC = () => {
     const [captcha, setCaptcha] = useState<string>("");
@@ -65,8 +67,9 @@ const ContactPage: React.FC = () => {
                             <div>
                                 <h3 className="text-lg font-bold text-[#0b1f3a] mb-1">Office Location</h3>
                                 <p className="text-sm text-gray-600">
-                                    361/3, Pillayar Kovil Street, Irandamkattalai, Kovur, Chennai - 600 122. India
+                                    {contactInfo.address}
                                 </p>
+
                             </div>
                         </motion.div>
 
@@ -84,8 +87,10 @@ const ContactPage: React.FC = () => {
                             </div>
                             <div>
                                 <h3 className="text-lg font-bold text-[#0b1f3a] mb-1">Phone</h3>
-                                <p className="text-sm text-gray-600 font-semibold">+91 - 9884209774</p>
-                                <p className="text-sm text-gray-600 font-semibold">+91 - 8056063023</p>
+                                {contactInfo.phones.map((phone, idx) => (
+                                    <p key={idx} className="text-sm text-gray-600 font-semibold">{phone.value}</p>
+                                ))}
+
                             </div>
                         </motion.div>
 
@@ -103,7 +108,8 @@ const ContactPage: React.FC = () => {
                             </div>
                             <div>
                                 <h3 className="text-lg font-bold text-[#0b1f3a] mb-1">Email</h3>
-                                <p className="text-sm text-gray-600 font-semibold">nskilltraining@gmail.com</p>
+                                <p className="text-sm text-gray-600 font-semibold">{contactInfo.email}</p>
+
                             </div>
                         </motion.div>
                     </div>
@@ -205,7 +211,8 @@ const ContactPage: React.FC = () => {
                 <div className="w-full h-[400px] bg-gray-200 relative rounded-2xl overflow-hidden shadow-md">
                     <iframe
                         title="N-Skill India Location"
-                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3887.355152504856!2d80.1293214!3d13.012892!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a525fdf8e6b19a3%3A0x6b7b2586e3f1e1e!2sPillayar%20Kovil%20St%2C%20Chennai%2C%20Tamil%20Nadu!5e0!3m2!1sen!2sin!4v1709476000000!5m2!1sen!2sin"
+                        src={contactInfo.mapEmbedUrl}
+
                         width="100%"
                         height="100%"
                         style={{ border: 0 }}
