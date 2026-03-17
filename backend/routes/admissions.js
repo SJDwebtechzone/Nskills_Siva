@@ -39,22 +39,23 @@ const addReferralPoints = async (admissionData, associateId) => {
         const totalFees = parseFloat(admissionData.total_fees) || 0;
 
         if (balance === 0 && totalFees > 0) {
-            // Check if points already awarded for this admission
             const check = await pool.query("SELECT id FROM associate_referral_points WHERE admission_id = $1", [admissionData.id]);
             if (check.rows.length === 0) {
-                const points = totalFees * 0.10; // 10%
+                const points = totalFees * 0.10;
                 await pool.query(
                     `INSERT INTO associate_referral_points (associate_id, admission_id, student_name, course_fee, points_earned)
                      VALUES ($1, $2, $3, $4, $5)`,
                     [associateId, admissionData.id, admissionData.full_name, totalFees, points]
                 );
-                console.log(`✅ 10% Referral points (${points}) awarded to associate ${associateId} for student ${admissionData.full_name}`);
+                console.log(`✅ 10% Referral points (${points}) awarded to associate ${associateId}`);
             }
         }
     } catch (err) {
         console.error("Error adding referral points:", err.message);
     }
 };
+
+// ─── STATIC / SPECIFIC ROUTES FIRST ──────────────────────────────────────────
 
 // Create new admission
 router.post("/", authMiddleware, uploadFields, async (req, res) => {
@@ -63,33 +64,26 @@ router.post("/", authMiddleware, uploadFields, async (req, res) => {
         const files = req.files;
         const userId = req.user.id;
 
-        // Helpers
         const toDate    = v => (v && v.trim() !== "" ? v : null);
         const toNum     = v => (v !== undefined && v !== "" ? parseFloat(v) : 0);
-        const toInt     = v => (v !== undefined && v !== "" ? parseInt(v)   : null);
         const toBool    = v => (v === true || v === "true");
         const toStr     = v => (v !== undefined && v !== null ? v.toString() : null);
 
-        // Validation
         const phoneRegex = /^\d{10}$/;
         if (data.mobile_number && !phoneRegex.test(data.mobile_number)) {
             return res.status(400).json({ error: "Mobile number must be exactly 10 digits" });
         }
         if (!data.full_name) return res.status(400).json({ error: "Full name is required" });
 
-        // Required fields defaults
-        const dob             = toDate(data.dob);
-        const payment_date    = toDate(data.payment_date);
-        const counselling_date= toDate(data.counselling_date);
+        const dob              = toDate(data.dob);
+        const payment_date     = toDate(data.payment_date);
+        const counselling_date = toDate(data.counselling_date);
 
-        if (!dob)             return res.status(400).json({ error: "Date of Birth is required" });
-        if (!payment_date)    return res.status(400).json({ error: "Payment date is required" });
-        if (!counselling_date)return res.status(400).json({ error: "Counselling date is required" });
+        if (!dob)              return res.status(400).json({ error: "Date of Birth is required" });
+        if (!payment_date)     return res.status(400).json({ error: "Payment date is required" });
+        if (!counselling_date) return res.status(400).json({ error: "Counselling date is required" });
 
-        // Helper to get file path
-        const getFilePath = (fieldName) => {
-            return files[fieldName] ? files[fieldName][0].path : null;
-        };
+        const getFilePath = (fieldName) => files[fieldName] ? files[fieldName][0].path : null;
 
         const query = `
             INSERT INTO student_admissions (
@@ -141,10 +135,7 @@ router.post("/", authMiddleware, uploadFields, async (req, res) => {
 
         const result = await pool.query(query, values);
         const newAdmission = result.rows[0];
-
-        // Process referral points if balance is 0
         await addReferralPoints(newAdmission, userId);
-
         res.status(201).json(newAdmission);
     } catch (err) {
         console.error("Admission submission error:", err.message);
@@ -155,50 +146,15 @@ router.post("/", authMiddleware, uploadFields, async (req, res) => {
     }
 });
 
-// Update admission (e.g. fee payment)
-router.patch("/:id", authMiddleware, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const data = req.body;
-        
-        // Dynamic update query
-        const fields = Object.keys(data).filter(f => !['id', 'created_at', 'created_by_id'].includes(f));
-        if (fields.length === 0) return res.status(400).json({ error: "No fields to update" });
-
-        const setClause = fields.map((f, i) => `${f} = $${i + 1}`).join(", ");
-        const values = fields.map(f => data[f]);
-        values.push(id);
-
-        const result = await pool.query(
-            `UPDATE student_admissions SET ${setClause} WHERE id = $${values.length} RETURNING *`,
-            values
-        );
-
-        if (result.rows.length === 0) return res.status(404).json({ error: "Admission not found" });
-
-        const updated = result.rows[0];
-        
-        // Process referral points if balance hit 0
-        await addReferralPoints(updated, updated.created_by_id);
-
-        res.json(updated);
-    } catch (err) {
-        console.error("Update admission error:", err.message);
-        res.status(500).json({ error: "Server Error" });
-    }
-});
-
-// Get all admissions (Filtered by Associate)
+// Get all admissions (filtered by role)
 router.get("/", authMiddleware, async (req, res) => {
     try {
         let query = "SELECT * FROM student_admissions";
         let params = [];
-
         if (req.user.roleName === "Associate") {
             query += " WHERE created_by_id = $1";
             params.push(req.user.id);
         }
-
         query += " ORDER BY created_at DESC";
         const result = await pool.query(query, params);
         res.json(result.rows);
@@ -208,7 +164,7 @@ router.get("/", authMiddleware, async (req, res) => {
     }
 });
 
-// Get referral points for an associate
+// Get referral points for the logged-in associate (MUST be before /:id)
 router.get("/referral-points/my", authMiddleware, async (req, res) => {
     try {
         const result = await pool.query(
@@ -222,22 +178,102 @@ router.get("/referral-points/my", authMiddleware, async (req, res) => {
     }
 });
 
-// Get admission by enquiry_id
+// Get ALL referral points — Super Admin only (MUST be before /:id)
+router.get("/referral-points/all", authMiddleware, async (req, res) => {
+    try {
+        if (req.user.roleName !== "Admin" && req.user.roleName !== "Super Admin") {
+            return res.status(403).json({ error: "Access denied. Admin only." });
+        }
+        const result = await pool.query(`
+            SELECT rp.*, u.name as associate_name, u.email as associate_email
+            FROM associate_referral_points rp
+            LEFT JOIN users u ON u.id = rp.associate_id
+            ORDER BY rp.created_at DESC
+        `);
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: "Server Error" });
+    }
+});
+
+// Mark a referral point settled — Admin only (MUST be before /:id)
+router.patch("/referral-points/:id/settle", authMiddleware, async (req, res) => {
+    try {
+        if (req.user.roleName !== "Admin" && req.user.roleName !== "Super Admin") {
+            return res.status(403).json({ error: "Access denied. Admin only." });
+        }
+        const result = await pool.query(
+            "UPDATE associate_referral_points SET is_settled = true WHERE id = $1 RETURNING *",
+            [req.params.id]
+        );
+        if (result.rows.length === 0) return res.status(404).json({ error: "Record not found" });
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error("Settle referral error:", err.message);
+        res.status(500).json({ error: "Server Error" });
+    }
+});
+
+// Get admission by enquiry_id (MUST be before /:id)
 router.get("/by-enquiry/:enquiry_id", authMiddleware, async (req, res) => {
     try {
         const result = await pool.query("SELECT * FROM student_admissions WHERE enquiry_id = $1", [req.params.enquiry_id]);
         if (result.rows.length === 0) {
             return res.status(404).json({ error: "Admission not found" });
         }
-        
-        // Ownership check
         if (req.user.roleName === "Associate" && result.rows[0].created_by_id !== req.user.id) {
             return res.status(403).json({ error: "Access denied" });
         }
-
         res.json(result.rows[0]);
     } catch (err) {
         console.error(err.message);
+        res.status(500).json({ error: "Server Error" });
+    }
+});
+
+// ─── DYNAMIC /:id ROUTES LAST ─────────────────────────────────────────────────
+
+// Update admission (PATCH /:id)
+router.patch("/:id", authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const data = req.body;
+        const fields = Object.keys(data).filter(f => !['id', 'created_at', 'created_by_id'].includes(f));
+        if (fields.length === 0) return res.status(400).json({ error: "No fields to update" });
+
+        const setClause = fields.map((f, i) => `${f} = $${i + 1}`).join(", ");
+        const values = fields.map(f => data[f]);
+        values.push(id);
+
+        const result = await pool.query(
+            `UPDATE student_admissions SET ${setClause} WHERE id = $${values.length} RETURNING *`,
+            values
+        );
+        if (result.rows.length === 0) return res.status(404).json({ error: "Admission not found" });
+
+        const updated = result.rows[0];
+        await addReferralPoints(updated, updated.created_by_id);
+        res.json(updated);
+    } catch (err) {
+        console.error("Update admission error:", err.message);
+        res.status(500).json({ error: "Server Error" });
+    }
+});
+
+// Delete admission — Admin only (DELETE /:id)
+router.delete("/:id", authMiddleware, async (req, res) => {
+    try {
+        if (req.user.roleName !== "Admin" && req.user.roleName !== "Super Admin") {
+            return res.status(403).json({ error: "Access denied. Admin only." });
+        }
+        const { id } = req.params;
+        await pool.query("DELETE FROM associate_referral_points WHERE admission_id = $1", [id]);
+        const result = await pool.query("DELETE FROM student_admissions WHERE id = $1 RETURNING *", [id]);
+        if (result.rows.length === 0) return res.status(404).json({ error: "Admission not found" });
+        res.json({ message: "Admission deleted successfully", deleted: result.rows[0] });
+    } catch (err) {
+        console.error("Delete admission error:", err.message);
         res.status(500).json({ error: "Server Error" });
     }
 });

@@ -83,6 +83,7 @@ const associateManagementItems = [
   { name: "Enquiry Form",          path: "/dashboard/associate-management/enquiry",   module: "Associate Management", icon: ClipboardList },
   { name: "Admission Form",        path: "/dashboard/associate-management/admission",  module: "Associate Management", icon: UserCheck      },
   { name: "Referral Fee Tracking", path: "/dashboard/associate-management/referral-tracking", module: "Associate Management", icon: DollarSign },
+  { name: "Referral Fee History",  path: "/dashboard/ntsc-management/referral-payment", module: "Associate Management", icon: Wallet },
 ];
 
 const studentManagementItems = [
@@ -145,7 +146,6 @@ const ntscManagementItems = [
   { name: "Download A4 Sheet", path: "/dashboard/ntsc-management/download-a4", icon: Printer },
   { name: "Enquiry / Admission and Document", path: "/dashboard/ntsc-management/enquiry-admission", icon: FileText },
   { name: "Update Class Status", path: "/dashboard/ntsc-management/class-status", icon: RefreshCw },
-  { name: "Update Referral Payment Status", path: "/dashboard/ntsc-management/referral-payment", icon: Wallet },
   { name: "Monitor Student Changes and Approval", path: "/dashboard/ntsc-management/monitor-approvals", icon: Eye },
 ];
 
@@ -224,7 +224,14 @@ function DashboardLayoutContent({ children }: DashboardLayoutProps) {
   );
   // Student Management: show if specific permission exists OR if user has Dashboard access (admin)
   const visibleAssociateItems   = associateManagementItems.filter(
-    (i) => permissions?.[i.module!]?.view || showDashboard
+    (i) => {
+      // Referral Fee History is ONLY for Admins/Super Admins
+      if (i.name === "Referral Fee History") {
+        return user?.role === "Admin" || user?.role === "Super Admin";
+      }
+
+      return permissions?.[i.module!]?.view || showDashboard;
+    }
   );
 
   // ✅ Initials generator

@@ -99,7 +99,64 @@ router.get("/", authMiddleware, async (req, res) => {
     }
 });
 
-// Get enquiry by enquiry_id
+// Update enquiry
+router.patch("/:id", authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const data = req.body;
+
+        const toDate = v => (v && typeof v === 'string' && v.trim() !== "" ? v : null);
+        const toStr  = v => (v !== undefined && v !== null ? v.toString() : null);
+
+        // Fields that can be updated
+        const updateFields = [
+            'enquiry_date', 'mode_of_enquiry', 'student_name', 'gender', 'age', 'dob',
+            'mobile_number', 'whatsapp_number', 'email_id', 'perm_address', 'perm_city',
+            'perm_state', 'perm_pin', 'curr_address', 'curr_city', 'curr_state', 'curr_pin',
+            'highest_qualification', 'year_of_passing', 'institution_name', 'career_objective',
+            'preferred_country', 'expected_salary', 'willing_to_work_all_india', 'work_experience',
+            'company_name', 'position', 'salary', 'location', 'skills_trade', 'father_name',
+            'mother_name', 'parent_contact', 'parent_occupation', 'referred_by',
+            'counsellor_name', 'counsellor_code', 'will_attend_test', 'course_interested',
+            'level_of_course', 'training_mode', 'batch_timing', 'counselling_date',
+            'counselling_done_by', 'interest_level', 'follow_up_date', 'remarks'
+        ];
+
+        let queryParts = [];
+        let values = [];
+        let counter = 1;
+
+        updateFields.forEach(field => {
+            if (data[field] !== undefined) {
+                queryParts.push(`${field} = $${counter}`);
+                if (['dob', 'enquiry_date', 'counselling_date', 'follow_up_date'].includes(field)) {
+                    values.push(toDate(data[field]));
+                } else {
+                    values.push(toStr(data[field]));
+                }
+                counter++;
+            }
+        });
+
+        if (queryParts.length === 0) {
+            return res.status(400).json({ error: "No fields provided for update" });
+        }
+
+        const query = `UPDATE student_enquiries SET ${queryParts.join(", ")} WHERE id = $${counter} RETURNING *`;
+        values.push(id);
+
+        const result = await pool.query(query, values);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: "Enquiry not found" });
+        }
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error("Update enquiry error:", err.message);
+        res.status(500).json({ error: "Server Error" });
+    }
+});
+
 router.get("/:enquiry_id", authMiddleware, async (req, res) => {
     try {
         const result = await pool.query("SELECT * FROM student_enquiries WHERE enquiry_id = $1", [req.params.enquiry_id]);
@@ -119,7 +176,22 @@ router.get("/:enquiry_id", authMiddleware, async (req, res) => {
     }
 });
 
-module.exports = router;
+// Delete enquiry (Admin only)
+router.delete("/:id", authMiddleware, async (req, res) => {
+    try {
+        if (req.user.roleName !== "Admin" && req.user.roleName !== "Super Admin") {
+            return res.status(403).json({ error: "Access denied. Admin only." });
+        }
+        const { id } = req.params;
+        const result = await pool.query("DELETE FROM student_enquiries WHERE id = $1 RETURNING *", [id]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: "Enquiry not found" });
+        }
+        res.json({ message: "Enquiry deleted successfully", deleted: result.rows[0] });
+    } catch (err) {
+        console.error("Delete enquiry error:", err.message);
+        res.status(500).json({ error: "Server Error" });
+    }
+});
 
 module.exports = router;
-

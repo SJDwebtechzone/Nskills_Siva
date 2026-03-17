@@ -17,7 +17,9 @@ export default function AssociateDashboard() {
         totalEnquiries: 0,
         totalAdmissions: 0,
         pendingFees: 0,
-        totalPoints: 0
+        totalPoints: 0,
+        recentEnquiries: [] as any[],
+        recentAdmissions: [] as any[]
     });
     const [isLoading, setIsLoading] = useState(true);
 
@@ -47,7 +49,9 @@ export default function AssociateDashboard() {
                 totalEnquiries: enqRes.data.length,
                 totalAdmissions: admRes.data.length,
                 pendingFees: pendingFeesCount,
-                totalPoints: totalPoints
+                totalPoints: totalPoints,
+                recentEnquiries: enqRes.data.slice(0, 5),
+                recentAdmissions: admRes.data.slice(0, 5)
             });
         } catch (err) {
             console.error("Failed to fetch dashboard stats", err);
@@ -138,6 +142,88 @@ export default function AssociateDashboard() {
                         <Link href="/dashboard/associate-management/referral-tracking" className="w-full py-4 bg-slate-50 hover:bg-slate-100 rounded-2xl flex items-center justify-center gap-3 font-bold text-slate-600 transition-all group">
                             View Referral Points <ArrowUpRight className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                         </Link>
+                    </div>
+                </div>
+            </div>
+
+            {/* Recent Data Tables */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mt-4">
+                {/* Recent Enquiries */}
+                <div className="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 overflow-hidden">
+                    <div className="p-8 border-b border-slate-50 flex justify-between items-center">
+                        <h3 className="text-xl font-black text-slate-800 flex items-center gap-2">
+                            <Users className="text-blue-600" /> Recent Enquiries
+                        </h3>
+                        <Link href="/dashboard/associate-management/enquiry" className="text-xs font-bold text-blue-600 hover:underline">View All</Link>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead className="bg-slate-50/50">
+                                <tr>
+                                    <th className="py-4 px-8 font-black uppercase text-[10px] tracking-widest text-slate-400">Student</th>
+                                    <th className="py-4 px-4 font-black uppercase text-[10px] tracking-widest text-slate-400">Course</th>
+                                    <th className="py-4 px-8 font-black uppercase text-[10px] tracking-widest text-slate-400">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {stats.recentEnquiries.length === 0 ? (
+                                    <tr><td colSpan={3} className="py-10 text-center text-slate-300 font-bold">No enquiries found</td></tr>
+                                ) : stats.recentEnquiries.map((enq, i) => (
+                                    <tr key={enq.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-all">
+                                        <td className="py-4 px-8">
+                                            <div className="font-bold text-slate-800">{enq.student_name}</div>
+                                            <div className="text-[10px] font-mono text-blue-600">{enq.enquiry_id}</div>
+                                        </td>
+                                        <td className="py-4 px-4 text-xs font-bold text-slate-500">{enq.course_interested}</td>
+                                        <td className="py-4 px-8 text-xs font-bold text-slate-400">{new Date(enq.created_at).toLocaleDateString()}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {/* Recent Admissions */}
+                <div className="bg-white rounded-[2.5rem] shadow-xl border border-slate-100 overflow-hidden">
+                    <div className="p-8 border-b border-slate-50 flex justify-between items-center">
+                        <h3 className="text-xl font-black text-slate-800 flex items-center gap-2">
+                            <CheckCircle2 className="text-green-600" /> Recent Admissions
+                        </h3>
+                        <Link href="/dashboard/associate-management/admission" className="text-xs font-bold text-green-600 hover:underline">View All</Link>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead className="bg-slate-50/50">
+                                <tr>
+                                    <th className="py-4 px-8 font-black uppercase text-[10px] tracking-widest text-slate-400">Student</th>
+                                    <th className="py-4 px-4 font-black uppercase text-[10px] tracking-widest text-slate-400">Amount</th>
+                                    <th className="py-4 px-8 font-black uppercase text-[10px] tracking-widest text-slate-400">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {stats.recentAdmissions.length === 0 ? (
+                                    <tr><td colSpan={3} className="py-10 text-center text-slate-300 font-bold">No admissions found</td></tr>
+                                ) : stats.recentAdmissions.map((adm, i) => (
+                                    <tr key={adm.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-all">
+                                        <td className="py-4 px-8">
+                                            <div className="font-bold text-slate-800">{adm.full_name}</div>
+                                            <div className="text-[10px] font-mono text-green-600">{adm.enquiry_id}</div>
+                                        </td>
+                                        <td className="py-4 px-4">
+                                            <div className="text-xs font-bold text-slate-800">₹ {adm.total_fees}</div>
+                                            <div className={`text-[9px] font-black uppercase ${parseFloat(adm.balance_amount) === 0 ? 'text-green-600' : 'text-red-500'}`}>
+                                                Bal: ₹ {adm.balance_amount}
+                                            </div>
+                                        </td>
+                                        <td className="py-4 px-8">
+                                            <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${parseFloat(adm.balance_amount) === 0 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                {parseFloat(adm.balance_amount) === 0 ? 'Completed' : 'Partial'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

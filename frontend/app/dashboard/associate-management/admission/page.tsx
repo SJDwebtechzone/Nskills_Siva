@@ -7,8 +7,9 @@ import {
     Users, Send, ChevronRight, ChevronLeft, CheckCircle2,
     Database, Phone, Mail, Globe, Award, Sparkles, BookOpen,
     Clock, Smartphone, MessageCircle, FileText, CreditCard, ShieldCheck,
-    Search, AlertCircle, List, PlusCircle, Upload, AlertTriangle, Eye, X
+    Search, AlertCircle, List, PlusCircle, Upload, AlertTriangle, Eye, X, Edit, Trash2
 } from "lucide-react";
+import { useAuth } from "@/app/context/AuthContext";
 import axios from "axios";
 
 const API_BASE = "http://localhost:5000/api";
@@ -36,6 +37,9 @@ export default function StudentAdmissionForm() {
     const [searchId, setSearchId] = useState("");
     const [isSearching, setIsSearching] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const { can, user } = useAuth();
+    const [isEditing, setIsEditing] = useState(false);
+    const [editId, setEditId] = useState<number | null>(null);
 
     const [formData, setFormData] = useState<any>({
         enquiry_id: "",
@@ -224,6 +228,30 @@ export default function StudentAdmissionForm() {
         if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
     };
 
+    const handleEdit = (adm: any) => {
+        setFormData({
+            ...adm,
+            dob: adm.dob ? adm.dob.split('T')[0] : "",
+            passport_validity: adm.passport_validity ? adm.passport_validity.split('T')[0] : "",
+            counselling_date: adm.counselling_date ? adm.counselling_date.split('T')[0] : "",
+            payment_date: adm.payment_date ? adm.payment_date.split('T')[0] : ""
+        });
+        setEditId(adm.id);
+        setIsEditing(true);
+        setViewMode("form");
+        setCurrentStep(1); // Jump to Basic Info
+    };
+
+    const handleDelete = async (adm: any) => {
+        if (!confirm(`Delete admission for "${adm.full_name}" (${adm.enquiry_id})? This will also remove referral points. Cannot be undone.`)) return;
+        try {
+            await axios.delete(`${API_BASE}/admissions/${adm.id}`, { headers: getAuthHeaders() });
+            setAdmissions(prev => prev.filter(a => a.id !== adm.id));
+        } catch (err: any) {
+            alert(err.response?.data?.error || "Failed to delete admission.");
+        }
+    };
+
     const validateStep = (idx: number) => {
         const stepId = steps[idx].id;
         const newErrors: Record<string, string> = {};
@@ -326,12 +354,21 @@ export default function StudentAdmissionForm() {
         });
 
         try {
-            await axios.post(`${API_BASE}/admissions`, data, {
-                headers: { 
-                    ...getAuthHeaders(),
-                    'Content-Type': 'multipart/form-data' 
-                }
-            });
+            if (isEditing && editId) {
+                 await axios.patch(`${API_BASE}/admissions/${editId}`, data, {
+                    headers: { 
+                        ...getAuthHeaders(),
+                        'Content-Type': 'multipart/form-data' 
+                    }
+                });
+            } else {
+                await axios.post(`${API_BASE}/admissions`, data, {
+                    headers: { 
+                        ...getAuthHeaders(),
+                        'Content-Type': 'multipart/form-data' 
+                    }
+                });
+            }
             setIsSuccess(true);
             setTimeout(() => {
                 setIsSuccess(false);
@@ -391,7 +428,7 @@ export default function StudentAdmissionForm() {
                             <InputField label="6. Passport Number (If Available)" name="passport_number" value={formData.passport_number} onChange={handleChange} />
                             <InputField label="7. Passport Validity" name="passport_validity" type="date" value={formData.passport_validity} onChange={handleChange} />
                         </div>
-                        <FileField label="8. Recent Passport Size Photo" name="photo_file" onChange={handleChange} error={errors.photo_file} compulsory />
+                        <FileField label="8. Recent Passport Size Photo" name="photo_file" value={formData.photo_file || formData.photo_url} onChange={handleChange} error={errors.photo_file} compulsory />
                     </div>
                 );
             case "BC":
@@ -527,9 +564,18 @@ export default function StudentAdmissionForm() {
                                     <InputField label="54. Instalment-1" name="instalment_1" type="number" value={formData.instalment_1} onChange={handleChange} />
                                     <InputField label="55. Instalment-2" name="instalment_2" type="number" value={formData.instalment_2} onChange={handleChange} />
                                 </div>
-                                <div className="mt-4 p-4 bg-[#0b1f3a] rounded-xl flex justify-between items-center shadow-lg shadow-blue-200/50">
+                                 <div className="mt-4 p-4 bg-[#0b1f3a] rounded-xl flex justify-between items-center shadow-lg shadow-blue-200/50">
                                     <span className="text-blue-200 font-bold uppercase text-xs tracking-widest">56. Balance Payable Amount</span>
-                                    <span className="text-white text-2xl font-black">₹ {formData.balance_amount}</span>
+                                    {can("Associate Management", "edit") ? (
+                                        <input 
+                                            name="balance_amount" 
+                                            value={formData.balance_amount} 
+                                            onChange={handleChange} 
+                                            className="bg-white/10 text-white text-2xl font-black w-32 outline-none text-right border-b border-white/20"
+                                        />
+                                    ) : (
+                                        <span className="text-white text-2xl font-black">₹ {formData.balance_amount}</span>
+                                    )}
                                 </div>
                                 <p className="text-[10px] text-blue-600 font-bold mt-2 flex items-center gap-1"><AlertTriangle size={12} /> Auto-points (10%) will be added once balance is 0.</p>
                              </div>
@@ -542,12 +588,12 @@ export default function StudentAdmissionForm() {
                         <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200">
                              <h4 className="font-black text-slate-800 mb-4 flex items-center gap-2 uppercase tracking-wider text-sm"><FileText className="text-blue-600" size={18} /> K. Documents Checklist (Attach Copies)</h4>
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <FileField label="Aadhaar Card" name="has_aadhaar_file" onChange={handleChange} />
-                                <FileField label="Educational Certificates" name="has_edu_certs_file" onChange={handleChange} />
-                                <FileField label="Passport (If Available)" name="has_passport_file" onChange={handleChange} />
-                                <FileField label="Resume / Bio-data" name="has_resume_file" onChange={handleChange} />
-                                <FileField label="Address Proof" name="has_address_proof_file" onChange={handleChange} />
-                                <FileField label="Passport Size Photos" name="has_photos_file" onChange={handleChange} />
+                                <FileField label="Aadhaar Card" name="has_aadhaar_file" value={formData.has_aadhaar_file} onChange={handleChange} />
+                                <FileField label="Educational Certificates" name="has_edu_certs_file" value={formData.has_edu_certs_file} onChange={handleChange} />
+                                <FileField label="Passport (If Available)" name="has_passport_file" value={formData.has_passport_file} onChange={handleChange} />
+                                <FileField label="Resume / Bio-data" name="has_resume_file" value={formData.has_resume_file} onChange={handleChange} />
+                                <FileField label="Address Proof" name="has_address_proof_file" value={formData.has_address_proof_file} onChange={handleChange} />
+                                <FileField label="Passport Size Photos" name="has_photos_file" value={formData.has_photos_file} onChange={handleChange} />
                              </div>
                         </div>
 
@@ -643,14 +689,34 @@ export default function StudentAdmissionForm() {
                                             ₹ {adm.balance_amount || '0'}
                                         </span>
                                     </td>
-                                    <td className="py-5 px-4 text-center">
-                                        <button 
-                                            onClick={() => setSelectedAdmission(adm)}
-                                            className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all shadow-sm"
-                                            title="View Details"
-                                        >
-                                            <Eye size={18} />
-                                        </button>
+                                     <td className="py-5 px-4 text-center">
+                                        <div className="flex gap-2 justify-center">
+                                            <button 
+                                                onClick={() => setSelectedAdmission(adm)}
+                                                className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                                                title="View Details"
+                                            >
+                                                <Eye size={18} />
+                                            </button>
+                                            {can("Associate Management", "edit") && user?.role !== "Associate" && (
+                                                <button 
+                                                    onClick={() => handleEdit(adm)}
+                                                    className="p-2 bg-amber-100 text-amber-600 rounded-lg hover:bg-amber-600 hover:text-white transition-all shadow-sm"
+                                                    title="Edit Admission"
+                                                >
+                                                    <Edit size={18} />
+                                                </button>
+                                            )}
+                                            {can("Associate Management", "delete") && user?.role !== "Associate" && (
+                                                <button 
+                                                    onClick={() => handleDelete(adm)}
+                                                    className="p-2 bg-red-100 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                                                    title="Delete Admission"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -667,7 +733,7 @@ export default function StudentAdmissionForm() {
             <div className="flex justify-between items-center mb-8 px-4">
                 <div className="flex bg-slate-100 p-1 rounded-2xl">
                     <button 
-                        onClick={() => { setViewMode("form"); setFormData({ ...formData, enquiry_id: "" }); setCurrentStep(0); }}
+                        onClick={() => { setViewMode("form"); setFormData({ ...formData, enquiry_id: "" }); setCurrentStep(0); setIsEditing(false); setEditId(null); }}
                         className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${viewMode === "form" ? 'bg-[#0b1f3a] text-white shadow-xl' : 'text-slate-500 hover:text-slate-800'}`}
                     >
                         <PlusCircle size={18} /> New Admission
@@ -711,9 +777,9 @@ export default function StudentAdmissionForm() {
                         <div className="bg-[#0b1f3a] px-8 py-10 text-white flex justify-between items-center relative overflow-hidden">
                             <div className="relative z-10">
                                 <h2 className="text-3xl font-black tracking-tight flex items-center gap-3">
-                                    <Award className="text-blue-400" /> Student Admission
+                                    <Award className="text-blue-400" /> {isEditing ? "Edit Admission" : "Student Admission"}
                                 </h2>
-                                <p className="text-blue-300 font-bold mt-1 uppercase text-xs tracking-[0.2em]">{steps[currentStep].title}</p>
+                                <p className="text-blue-300 font-bold mt-1 uppercase text-xs tracking-[0.2em]">{isEditing ? "Update details for " + formData.full_name : steps[currentStep].title}</p>
                             </div>
                             {formData.enquiry_id && (
                                 <div className="bg-white/10 px-6 py-3 rounded-3xl border border-white/20 backdrop-blur-md relative z-10">
@@ -915,7 +981,7 @@ const CheckboxField = ({ label, name, checked, onChange, error = "", compulsory 
     </label>
 );
 
-const FileField = ({ label, name, onChange, error = "", compulsory = false }: any) => (
+const FileField = ({ label, name, value, onChange, error = "", compulsory = false }: any) => (
     <div className="flex flex-col gap-1.5 w-full">
         <label className="text-[12px] font-black text-slate-700 uppercase tracking-[0.1em] ml-1 flex items-center gap-1">
             {label} {compulsory && <span className="text-red-500">*</span>}
@@ -927,7 +993,9 @@ const FileField = ({ label, name, onChange, error = "", compulsory = false }: an
             />
             <div className="flex items-center gap-3 text-slate-400 group-hover:text-blue-600">
                 <Upload size={20} className={error ? "text-red-400" : "text-blue-400"} />
-                <span className={`text-xs font-black uppercase tracking-wider ${error ? "text-red-600" : "text-slate-600"}`}>Choose File</span>
+                <span className={`text-xs font-black uppercase tracking-wider ${error ? "text-red-600" : "text-slate-600"}`}>
+                    {value ? (typeof value === 'string' ? value.split('/').pop() : value.name) : "Choose File"}
+                </span>
             </div>
         </div>
         {error && <span className="text-red-500 text-[10px] font-black uppercase tracking-widest mt-1 ml-1">{error}</span>}

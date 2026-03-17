@@ -6,8 +6,9 @@ import {
     User, Calendar, MapPin, GraduationCap, Target, Briefcase,
     Users, Send, ChevronRight, ChevronLeft, CheckCircle2,
     Database, Phone, Mail, Globe, Award, Sparkles, BookOpen,
-    Smartphone, MessageCircle, FileText, Search, List, PlusCircle, X, Eye
+    Smartphone, MessageCircle, FileText, Search, List, PlusCircle, X, Eye, Edit, Trash2
 } from "lucide-react";
+import { useAuth } from "@/app/context/AuthContext";
 import axios from "axios";
 
 const API_BASE = "http://localhost:5000/api";
@@ -30,6 +31,9 @@ export default function StudentEnquiryForm() {
     const [isSuccess, setIsSuccess] = useState(false);
     const [enquiryId, setEnquiryId] = useState("");
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const { can, user } = useAuth();
+    const [isEditing, setIsEditing] = useState(false);
+    const [editId, setEditId] = useState<number | null>(null);
 
     const [formData, setFormData] = useState<any>({
         student_name: "", gender: "Male", age: "", dob: "", mobile_number: "", whatsapp_number: "", email_id: "",
@@ -71,6 +75,30 @@ export default function StudentEnquiryForm() {
         const { name, value } = e.target;
         setFormData((prev: any) => ({ ...prev, [name]: value }));
         if (errors[name]) setErrors(prev => ({ ...prev, [name]: "" }));
+    };
+
+    const handleEdit = (enq: any) => {
+        setFormData({
+            ...enq,
+            enquiry_date: enq.enquiry_date ? enq.enquiry_date.split('T')[0] : "",
+            dob: enq.dob ? enq.dob.split('T')[0] : "",
+            counselling_date: enq.counselling_date ? enq.counselling_date.split('T')[0] : "",
+            follow_up_date: enq.follow_up_date ? enq.follow_up_date.split('T')[0] : "",
+        });
+        setEditId(enq.id);
+        setIsEditing(true);
+        setViewMode("form");
+        setCurrentStep(0);
+    };
+
+    const handleDelete = async (enq: any) => {
+        if (!confirm(`Delete enquiry for "${enq.student_name}" (${enq.enquiry_id})? This cannot be undone.`)) return;
+        try {
+            await axios.delete(`${API_BASE}/enquiries/${enq.id}`, { headers: getAuthHeaders() });
+            setEnquiries(prev => prev.filter(e => e.id !== enq.id));
+        } catch (err: any) {
+            alert(err.response?.data?.error || "Failed to delete enquiry.");
+        }
     };
 
     const validateStep = (idx: number) => {
@@ -124,8 +152,12 @@ export default function StudentEnquiryForm() {
         if (!validateStep(currentStep)) return;
         setIsSubmitting(true);
         try {
-            const response = await axios.post(`${API_BASE}/enquiries`, formData, { headers: getAuthHeaders() });
-            setEnquiryId(response.data.enquiry_id);
+            if (isEditing && editId) {
+                await axios.patch(`${API_BASE}/enquiries/${editId}`, formData, { headers: getAuthHeaders() });
+            } else {
+                const response = await axios.post(`${API_BASE}/enquiries`, formData, { headers: getAuthHeaders() });
+                setEnquiryId(response.data.enquiry_id);
+            }
             setIsSuccess(true);
         } catch (error: any) {
             console.error("Enquiry submission error:", error);
@@ -221,7 +253,24 @@ export default function StudentEnquiryForm() {
         <div className="max-w-4xl mx-auto">
             <div className="flex justify-between items-center mb-8 px-4">
                 <div className="flex bg-slate-100 p-1 rounded-2xl">
-                    <button onClick={() => setViewMode("form")} className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${viewMode === "form" ? 'bg-[#0b1f3a] text-white' : 'text-slate-500'}`}>
+                    <button onClick={() => { 
+                        setViewMode("form"); 
+                        setIsEditing(false); 
+                        setEditId(null);
+                        setFormData({
+                            student_name: "", gender: "Male", age: "", dob: "", mobile_number: "", whatsapp_number: "", email_id: "",
+                            perm_address: "", perm_city: "", perm_state: "", perm_pin: "",
+                            curr_address: "", curr_city: "", curr_state: "", curr_pin: "",
+                            highest_qualification: "", year_of_passing: "", institution_name: "",
+                            career_objective: "Job", preferred_country: "", expected_salary: "", willing_to_work_all_india: "Yes",
+                            work_experience: "Fresher", company_name: "", position: "", salary: "", location: "", skills_trade: "",
+                            father_name: "", mother_name: "", parent_contact: "", parent_occupation: "",
+                            referred_by: "", counsellor_name: "", counsellor_code: "", will_attend_test: "Yes",
+                            course_interested: "", level_of_course: "Basic", training_mode: "Classroom", batch_timing: "",
+                            counselling_date: "", counselling_done_by: "", interest_level: "High", follow_up_date: "", remarks: ""
+                        });
+                        setCurrentStep(0);
+                    }} className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${viewMode === "form" ? 'bg-[#0b1f3a] text-white' : 'text-slate-500'}`}>
                         <PlusCircle size={18} /> New Enquiry
                     </button>
                     <button onClick={() => setViewMode("list")} className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 ${viewMode === "list" ? 'bg-[#0b1f3a] text-white' : 'text-slate-500'}`}>
@@ -234,8 +283,8 @@ export default function StudentEnquiryForm() {
                 <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden">
                     <div className="bg-[#0b1f3a] px-8 py-10 text-white flex justify-between items-center">
                         <div>
-                            <h2 className="text-3xl font-black tracking-tight">Student Enquiry</h2>
-                            <p className="text-blue-300 font-bold mt-1 uppercase text-xs tracking-widest">{steps[currentStep].title}</p>
+                            <h2 className="text-3xl font-black tracking-tight">{isEditing ? "Edit Enquiry" : "Student Enquiry"}</h2>
+                            <p className="text-blue-300 font-bold mt-1 uppercase text-xs tracking-widest">{isEditing ? "Update details for " + formData.student_name : steps[currentStep].title}</p>
                         </div>
                         <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center border border-white/20">
                             <span className="text-xl font-black">{currentStep + 1}</span>
@@ -283,11 +332,23 @@ export default function StudentEnquiryForm() {
                                             <td className="py-4 font-bold text-slate-800">{enq.student_name}</td>
                                             <td className="py-4 text-sm font-medium text-slate-500">{enq.course_interested}</td>
                                             <td className="py-4 text-sm font-medium text-slate-400">{new Date(enq.created_at).toLocaleDateString()}</td>
-                                            <td className="py-4 text-center">
-                                                <button onClick={() => setSelectedEnquiry(enq)} className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all">
-                                                    <Eye size={16} />
-                                                </button>
-                                            </td>
+                                             <td className="py-4 text-center">
+                                                <div className="flex gap-2 justify-center">
+                                                    <button onClick={() => setSelectedEnquiry(enq)} className="p-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-all" title="View">
+                                                        <Eye size={16} />
+                                                    </button>
+                                                    {can("Associate Management", "edit") && user?.role !== "Associate" && (
+                                                        <button onClick={() => handleEdit(enq)} className="p-2 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-600 hover:text-white transition-all" title="Edit">
+                                                            <Edit size={16} />
+                                                        </button>
+                                                    )}
+                                                    {can("Associate Management", "delete") && user?.role !== "Associate" && (
+                                                        <button onClick={() => handleDelete(enq)} className="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all" title="Delete">
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                             </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -321,9 +382,13 @@ export default function StudentEnquiryForm() {
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-50 bg-[#0b1f3a]/90 flex items-center justify-center p-6">
                         <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-[3rem] p-12 max-w-sm w-full text-center">
                             <div className="w-20 h-20 bg-green-100 text-green-600 rounded-[2rem] flex items-center justify-center mx-auto mb-6"><CheckCircle2 size={40} /></div>
-                            <h3 className="text-2xl font-black text-slate-800">Enquiry Submitted!</h3>
-                            <p className="text-slate-400 font-bold mt-2 uppercase text-[10px]">Your Enquiry ID is</p>
-                            <p className="text-3xl font-black text-blue-600 mt-2 font-mono">{enquiryId}</p>
+                            <h3 className="text-2xl font-black text-slate-800">{isEditing ? "Enquiry Updated!" : "Enquiry Submitted!"}</h3>
+                            {!isEditing && (
+                                <>
+                                    <p className="text-slate-400 font-bold mt-2 uppercase text-[10px]">Your Enquiry ID is</p>
+                                    <p className="text-3xl font-black text-blue-600 mt-2 font-mono">{enquiryId}</p>
+                                </>
+                            )}
                             <button onClick={() => { setIsSuccess(false); window.location.reload(); }} className="mt-8 w-full py-4 bg-[#0b1f3a] text-white rounded-2xl font-black uppercase text-[10px]">Back to Dashboard</button>
                         </motion.div>
                     </motion.div>
