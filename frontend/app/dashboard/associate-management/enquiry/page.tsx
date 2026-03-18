@@ -361,16 +361,120 @@ export default function StudentEnquiryForm() {
             <AnimatePresence>
                 {selectedEnquiry && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-6">
-                        <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} className="bg-white rounded-[2rem] w-full max-w-3xl p-10 relative max-h-[90vh] overflow-y-auto">
-                            <button onClick={() => setSelectedEnquiry(null)} className="absolute top-6 right-6 text-slate-300 hover:text-red-500"><X size={24} /></button>
-                            <h3 className="text-2xl font-black text-slate-800 mb-6">{selectedEnquiry.student_name}</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <DetailItem label="Enquiry ID" value={selectedEnquiry.enquiry_id} />
-                                <DetailItem label="Mobile" value={selectedEnquiry.mobile_number} />
-                                <DetailItem label="Email" value={selectedEnquiry.email_id} />
-                                <DetailItem label="Course Interested" value={selectedEnquiry.course_interested} />
-                                <DetailItem label="Gender" value={selectedEnquiry.gender} />
-                                <DetailItem label="Date of Birth" value={new Date(selectedEnquiry.dob).toLocaleDateString()} />
+                        <motion.div 
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            className="bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl relative"
+                        >
+                            <button 
+                                onClick={() => setSelectedEnquiry(null)} 
+                                className="absolute top-6 right-6 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                            >
+                                <X size={24} />
+                            </button>
+
+                            <div className="p-10 max-h-[85vh] overflow-y-auto custom-scrollbar">
+                                <div className="flex items-center gap-6 mb-10 pb-6 border-b border-slate-100">
+                                    <div className="w-20 h-20 bg-[#0b1f3a] rounded-3xl flex items-center justify-center text-white text-3xl font-black shadow-xl">
+                                        {selectedEnquiry.student_name[0].toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-wider">Student Enquiry</span>
+                                            <span className="text-slate-300">|</span>
+                                            <span className="text-blue-600 font-mono font-black text-xs uppercase">#{selectedEnquiry.enquiry_id}</span>
+                                        </div>
+                                        <h3 className="text-3xl font-black text-slate-800 tracking-tight">{selectedEnquiry.student_name}</h3>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-12">
+                                    {/* Personal Info */}
+                                    <section>
+                                        <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-6">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span> 1. Personal Information
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                            <DetailItem label="Full Name" value={selectedEnquiry.student_name} />
+                                            <DetailItem label="Gender" value={selectedEnquiry.gender} />
+                                            <DetailItem label="Age" value={selectedEnquiry.age} />
+                                            <DetailItem label="Date of Birth" value={selectedEnquiry.dob ? new Date(selectedEnquiry.dob).toLocaleDateString() : "N/A"} />
+                                            <DetailItem label="Nationality" value={selectedEnquiry.nationality || "Indian"} />
+                                        </div>
+                                    </section>
+
+                                    {/* Contact Info */}
+                                    <section>
+                                        <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-6">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span> 2. Contact Details
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                            <DetailItem label="Mobile Number" value={selectedEnquiry.mobile_number} />
+                                            <DetailItem label="WhatsApp Number" value={selectedEnquiry.whatsapp_number} />
+                                            <DetailItem label="Email ID" value={selectedEnquiry.email_id} />
+                                            <div className="md:col-span-2 lg:col-span-3">
+                                                 <DetailItem label="Permanent Address" value={`${selectedEnquiry.perm_address}, ${selectedEnquiry.perm_city}, ${selectedEnquiry.perm_state} - ${selectedEnquiry.perm_pin}`} />
+                                            </div>
+                                        </div>
+                                    </section>
+
+                                    {/* Education & Career */}
+                                    <section>
+                                        <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-6">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span> 3. Education & Career
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                            <DetailItem label="Qualification" value={selectedEnquiry.highest_qualification} />
+                                            <DetailItem label="Year of Passing" value={selectedEnquiry.year_of_passing} />
+                                            <DetailItem label="Institution" value={selectedEnquiry.institution_name} />
+                                            <DetailItem label="Career Objective" value={selectedEnquiry.career_objective} />
+                                            <DetailItem label="Work Experience" value={selectedEnquiry.work_experience} />
+                                            <DetailItem label="Location Preferred" value={selectedEnquiry.location} />
+                                        </div>
+                                    </section>
+
+                                    {/* Family Details */}
+                                    <section>
+                                        <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-6">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span> 4. Family & Referral
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                            <DetailItem label="Father's Name" value={selectedEnquiry.father_name} />
+                                            <DetailItem label="Mother's Name" value={selectedEnquiry.mother_name} />
+                                            <DetailItem label="Parent Contact" value={selectedEnquiry.parent_contact} />
+                                            <DetailItem label="Referred By" value={selectedEnquiry.referred_by} />
+                                            <DetailItem label="Counsellor" value={selectedEnquiry.counsellor_name} />
+                                        </div>
+                                    </section>
+
+                                    {/* Counselling Details */}
+                                    <section className="p-8 bg-slate-50 rounded-[2rem] border border-slate-100 italic">
+                                        <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-6 not-italic">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span> 5. Counselling Details
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                            <DetailItem label="Course Interested" value={selectedEnquiry.course_interested} />
+                                            <DetailItem label="Interest Level" value={selectedEnquiry.interest_level} />
+                                            <DetailItem label="Training Mode" value={selectedEnquiry.training_mode} />
+                                            <DetailItem label="Follow-up Date" value={selectedEnquiry.follow_up_date ? new Date(selectedEnquiry.follow_up_date).toLocaleDateString() : "Not set"} />
+                                        </div>
+                                        {selectedEnquiry.remarks && (
+                                            <div className="mt-8 pt-6 border-t border-slate-200">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 not-italic">Notes / Remarks</p>
+                                                <p className="text-sm text-slate-600 font-medium">"{selectedEnquiry.remarks}"</p>
+                                            </div>
+                                        )}
+                                    </section>
+                                </div>
+
+                                <div className="mt-12 flex items-center justify-center">
+                                    <button 
+                                        onClick={() => setSelectedEnquiry(null)}
+                                        className="w-full py-4 bg-[#0b1f3a] text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-all shadow-lg"
+                                    >
+                                        Close Record
+                                    </button>
+                                </div>
                             </div>
                         </motion.div>
                     </motion.div>

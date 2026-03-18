@@ -39,13 +39,17 @@ export default function ReferralTracking() {
             setPoints(data);
 
             const total = data.reduce((acc: number, curr: any) => acc + parseFloat(curr.points_earned), 0);
-            const pending = data.filter((p: any) => !p.is_settled).reduce((acc: number, curr: any) => acc + parseFloat(curr.points_earned), 0);
+            const pending = data.filter((p: any) => !p.is_settled && parseFloat(p.points_earned) > 0).reduce((acc: number, curr: any) => acc + parseFloat(curr.points_earned), 0);
+            const settled = data.filter((p: any) => p.is_settled).reduce((acc: number, curr: any) => acc + parseFloat(curr.points_earned), 0);
+            const awaitingBalance = data.filter((p: any) => !p.is_settled && parseFloat(p.points_earned) === 0).length;
             
             setStats({
                 totalEarned: total,
                 pendingSettlement: pending,
-                completedEnrollments: data.length
-            });
+                completedEnrollments: data.length, // total referrals
+                settledAmount: settled,
+                awaitingBalanceCount: awaitingBalance
+            } as any);
         } catch (err) {
             console.error("Failed to fetch referral points", err);
         } finally {
@@ -58,50 +62,57 @@ export default function ReferralTracking() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-black text-slate-800 tracking-tight">Referral Fee Points</h2>
-                    <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.2em] mt-1">Track your earnings and referral success</p>
+                    <h2 className="text-3xl font-black text-slate-800 tracking-tight">Referral Fee Tracking</h2>
+                    <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.2em] mt-1">Real-time status of your commissions</p>
                 </div>
                 <button 
                     onClick={fetchPoints}
                     className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-2xl font-bold text-sm text-slate-600 hover:bg-slate-50 transition-all shadow-sm"
                 >
-                    <RefreshCw size={18} className={isLoading ? "animate-spin" : ""} /> Refresh Data
+                    <RefreshCw size={18} className={isLoading ? "animate-spin" : ""} /> Refresh Status
                 </button>
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <StatCard 
-                    label="Total Commission Earned" 
+                    label="Total Points Earned" 
                     value={`₹ ${stats.totalEarned.toLocaleString()}`} 
                     icon={Wallet} 
                     color="bg-blue-600" 
-                    trend="+10% of Total Fees"
+                    trend="10% Referral Active"
                 />
                 <StatCard 
-                    label="Pending Settlement" 
-                    value={`₹ ${stats.pendingSettlement.toLocaleString()}`} 
+                    label="Ready for Payment" 
+                    value={`₹ ${((stats as any).pendingSettlement || 0).toLocaleString()}`} 
                     icon={Clock} 
                     color="bg-amber-500" 
-                    sub="Updated on Balance: ₹0"
+                    sub="Waiting for Admin Payout"
                 />
                 <StatCard 
-                    label="Successful Referrals" 
+                    label="Paid & Settled" 
+                    value={`₹ ${((stats as any).settledAmount || 0).toLocaleString()}`} 
+                    icon={CheckCircle2} 
+                    color="bg-green-600" 
+                    sub="Amount Paid to You"
+                />
+                <StatCard 
+                    label="Total Referrals" 
                     value={stats.completedEnrollments.toString()} 
                     icon={Users} 
-                    color="bg-green-600" 
-                    sub="Fully Paid Students"
+                    color="bg-slate-800" 
+                    sub={`${(stats as any).awaitingBalanceCount || 0} Students Awaiting Bal.`}
                 />
             </div>
 
             {/* Main Content */}
             <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden">
-                <div className="p-8 border-b border-slate-100 flex justify-between items-center">
+                <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                     <h3 className="text-xl font-black text-slate-800 flex items-center gap-2">
-                        <TrendingUp className="text-blue-600" /> Points History
+                        <TrendingUp className="text-blue-600" /> Commission History
                     </h3>
                     <div className="px-4 py-1.5 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">
-                        10% referral system active
+                        Total Referrals: {points.length}
                     </div>
                 </div>
 
@@ -116,32 +127,31 @@ export default function ReferralTracking() {
                             <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <AlertCircle size={40} className="text-slate-300" />
                             </div>
-                            <h4 className="text-lg font-black text-slate-400">No Referral Fees Yet</h4>
-                            <p className="text-slate-400 text-sm mt-2 max-w-xs mx-auto">Referral fee points are automatically added once the student clears their total balance to ₹0.</p>
+                            <h4 className="text-lg font-black text-slate-400">No Referrals Recorded</h4>
+                            <p className="text-slate-400 text-sm mt-2 max-w-xs mx-auto">Referral fee points are automatically added here once an admission record is created via your dashboard.</p>
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full text-left">
-                                <thead className="bg-slate-50">
+                                <thead className="bg-slate-100">
                                     <tr>
-                                        <th className="py-5 px-8 font-black uppercase text-[10px] tracking-[0.2em] text-slate-400">Student Details</th>
-                                        <th className="py-5 px-8 font-black uppercase text-[10px] tracking-[0.2em] text-slate-400">Date Earned</th>
-                                        <th className="py-5 px-8 font-black uppercase text-[10px] tracking-[0.2em] text-slate-400">Course Fee</th>
-                                        <th className="py-5 px-8 font-black uppercase text-[10px] tracking-[0.2em] text-slate-400">My Points (10%)</th>
-                                        <th className="py-5 px-8 font-black uppercase text-[10px] tracking-[0.2em] text-slate-400 text-right">Status</th>
+                                        <th className="py-5 px-8 font-black uppercase text-[10px] tracking-[0.2em] text-slate-500">Student Enrollment</th>
+                                        <th className="py-5 px-8 font-black uppercase text-[10px] tracking-[0.2em] text-slate-500">Recorded On</th>
+                                        <th className="py-5 px-8 font-black uppercase text-[10px] tracking-[0.2em] text-slate-500">Points Earned</th>
+                                        <th className="py-5 px-8 font-black uppercase text-[10px] tracking-[0.2em] text-slate-500 text-right">Payment Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {points.map((item) => (
-                                        <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-all group">
+                                        <tr key={item.id} className="border-b border-slate-100/50 hover:bg-blue-50/30 transition-all group">
                                             <td className="py-6 px-8">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 font-bold group-hover:scale-110 transition-transform">
-                                                        <User size={18} />
+                                                    <div className="w-12 h-12 bg-white border border-slate-200 shadow-sm rounded-xl flex items-center justify-center text-blue-600 font-bold group-hover:bg-blue-600 group-hover:text-white transition-all">
+                                                        <User size={20} />
                                                     </div>
                                                     <div>
                                                         <p className="font-black text-slate-800">{item.student_name}</p>
-                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Adm ID: {item.admission_id}</p>
+                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Adm ID: #{item.admission_id}</p>
                                                     </div>
                                                 </div>
                                             </td>
@@ -152,21 +162,28 @@ export default function ReferralTracking() {
                                                 </div>
                                             </td>
                                             <td className="py-6 px-8">
-                                                <p className="font-bold text-slate-600">₹ {parseFloat(item.course_fee).toLocaleString()}</p>
-                                            </td>
-                                            <td className="py-6 px-8">
-                                                <div className="flex items-center gap-1.5">
-                                                    <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
-                                                    <p className="font-black text-blue-600 text-lg">₹ {parseFloat(item.points_earned).toLocaleString()}</p>
+                                                <div className="flex flex-col">
+                                                    <span className={`font-black text-lg ${parseFloat(item.points_earned) === 0 ? 'text-slate-400' : 'text-blue-600'}`}>
+                                                        ₹ {parseFloat(item.points_earned).toLocaleString()}
+                                                    </span>
+                                                    {parseFloat(item.points_earned) === 0 && (
+                                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter italic">Pending Student Payment</span>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td className="py-6 px-8 text-right">
-                                                <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                                                <span className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border ${
                                                     item.is_settled 
-                                                    ? 'bg-green-100 text-green-600 border border-green-200' 
-                                                    : 'bg-amber-100 text-amber-600 border border-amber-200'
+                                                    ? 'bg-green-50 text-green-700 border-green-100' 
+                                                    : parseFloat(item.points_earned) === 0
+                                                    ? 'bg-slate-50 text-slate-400 border-slate-100'
+                                                    : 'bg-amber-50 text-amber-700 border-amber-100 animate-pulse'
                                                 }`}>
-                                                    {item.is_settled ? 'Settled' : 'Credited'}
+                                                    {item.is_settled 
+                                                        ? '✓ Paid & Settled' 
+                                                        : parseFloat(item.points_earned) === 0 
+                                                        ? '⌛ Pending Balance' 
+                                                        : '⌛ Ready for Payout'}
                                                 </span>
                                             </td>
                                         </tr>
@@ -175,6 +192,55 @@ export default function ReferralTracking() {
                             </table>
                         </div>
                     )}
+                </div>
+            </div>
+
+            {/* Info Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="p-10 bg-[#0b1f3a] rounded-[2.5rem] text-white relative overflow-hidden shadow-2xl">
+                    <div className="relative z-10">
+                        <h4 className="text-xl font-black mb-6 flex items-center gap-2">
+                             <Award className="text-blue-400" /> Referral Pay Schedule
+                        </h4>
+                        <ul className="space-y-6">
+                            <li className="flex items-start gap-4">
+                                <div className="w-8 h-8 rounded-xl bg-blue-600/30 flex items-center justify-center shrink-0">
+                                    <span className="text-xs font-black">01</span>
+                                </div>
+                                <div>
+                                    <p className="font-black text-sm uppercase tracking-wider">Student Clears Balance</p>
+                                    <p className="text-xs text-blue-200 mt-1 font-medium">Commission is only calculated once the student's admission balance becomes ₹0.</p>
+                                </div>
+                            </li>
+                            <li className="flex items-start gap-4">
+                                <div className="w-8 h-8 rounded-xl bg-blue-600/30 flex items-center justify-center shrink-0">
+                                    <span className="text-xs font-black">02</span>
+                                </div>
+                                <div>
+                                    <p className="font-black text-sm uppercase tracking-wider">Ready for Payout</p>
+                                    <p className="text-xs text-blue-200 mt-1 font-medium">Once a set of points hits 10%, it shows as 'Ready for Payout' in your dashboard.</p>
+                                </div>
+                            </li>
+                             <li className="flex items-start gap-4">
+                                <div className="w-8 h-8 rounded-xl bg-blue-600/30 flex items-center justify-center shrink-0">
+                                    <span className="text-xs font-black">03</span>
+                                </div>
+                                <div>
+                                    <p className="font-black text-sm uppercase tracking-wider">Admin Settlement</p>
+                                    <p className="text-xs text-blue-200 mt-1 font-medium">When the finance team processes your payment, the status updates to 'Paid & Settled'.</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-blue-600/20 rounded-full blur-3xl"></div>
+                </div>
+
+                <div className="p-10 bg-white border-2 border-slate-50 rounded-[2.5rem] shadow-xl flex flex-col justify-center items-center text-center">
+                    <div className="w-20 h-20 bg-green-50 text-green-600 rounded-3xl flex items-center justify-center mb-6 shadow-sm">
+                        <CheckCircle2 size={40} />
+                    </div>
+                    <h4 className="text-2xl font-black text-slate-800">Dynamic Commissioning</h4>
+                    <p className="text-slate-500 font-medium mt-3 max-w-sm">Our automated tracking system ensures full transparency in your earnings. If you have any questions regarding pending payouts, please contact support.</p>
                 </div>
             </div>
 

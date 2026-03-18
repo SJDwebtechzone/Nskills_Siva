@@ -208,20 +208,35 @@ export default function AdminReferralPaymentPage() {
                                             ₹ {parseFloat(item.course_fee).toLocaleString()}
                                         </td>
                                         <td className="py-4 px-6">
-                                            <span className="font-black text-blue-600 text-lg">₹ {parseFloat(item.points_earned).toLocaleString()}</span>
+                                            <div className="flex flex-col">
+                                                <span className={`font-black text-lg ${parseFloat(item.points_earned) === 0 ? 'text-slate-400' : 'text-blue-600'}`}>
+                                                    ₹ {parseFloat(item.points_earned).toLocaleString()}
+                                                </span>
+                                                {parseFloat(item.points_earned) === 0 && (
+                                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter mt-1 italic">Waiting for Stud. Payment</span>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="py-4 px-6 text-center">
                                             <span className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${item.is_settled ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-amber-100 text-amber-700 border border-amber-200'}`}>
-                                                {item.is_settled ? "✓ Settled" : "⏳ Pending"}
+                                                {item.is_settled ? "✓ Paid & Settled" : (parseFloat(item.points_earned) === 0 ? "⏳ Pending Balance" : "⏳ Pending Payment")}
                                             </span>
                                         </td>
                                         <td className="py-4 px-6 text-center">
                                             {!item.is_settled ? (
                                                 <button
-                                                    onClick={() => markSettled(item.id)}
-                                                    className="px-4 py-1.5 bg-green-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-green-700 transition-all shadow-sm"
+                                                    onClick={() => {
+                                                        if (parseFloat(item.points_earned) === 0) {
+                                                            alert("Commission cannot be paid until the student clears their course balance.");
+                                                            return;
+                                                        }
+                                                        if (confirm(`Confirm Payment of ₹ ${parseFloat(item.points_earned).toLocaleString()} to ${item.associate_name}?`)) {
+                                                            markSettled(item.id);
+                                                        }
+                                                    }}
+                                                    className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm ${parseFloat(item.points_earned) === 0 ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-green-600 text-white hover:bg-green-700'}`}
                                                 >
-                                                    Mark Settled
+                                                    Pay Now
                                                 </button>
                                             ) : (
                                                 <span className="text-[10px] text-slate-300 font-bold uppercase">Done</span>

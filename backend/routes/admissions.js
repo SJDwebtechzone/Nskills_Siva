@@ -33,21 +33,44 @@ const uploadFields = upload.fields([
 ]);
 
 // Helper to add referral points
-const addReferralPoints = async (admissionData, associateId) => {
+const addReferralPoints = async (admissionData) => {
     try {
+        const userId = admissionData.created_by_id;
+        if (!userId) return;
+
+        // Check if creator is Associate
+        const userRes = await pool.query(`
+            SELECT r.name as role_name 
+            FROM users u 
+            JOIN roles r ON u.role_id = r.id 
+            WHERE u.id = $1`, 
+        [userId]);
+        
+        if (userRes.rows.length === 0 || userRes.rows[0].role_name !== "Associate") return;
+
         const balance = parseFloat(admissionData.balance_amount) || 0;
         const totalFees = parseFloat(admissionData.total_fees) || 0;
+        
+        // As requested: points are 0 if balance not cleared, 10% if cleared
+        const points = (balance <= 0 && totalFees > 0) ? (totalFees * 0.10) : 0;
 
-        if (balance === 0 && totalFees > 0) {
-            const check = await pool.query("SELECT id FROM associate_referral_points WHERE admission_id = $1", [admissionData.id]);
-            if (check.rows.length === 0) {
-                const points = totalFees * 0.10;
+        const check = await pool.query("SELECT id, is_settled FROM associate_referral_points WHERE admission_id = $1", [admissionData.id]);
+        
+        if (check.rows.length === 0) {
+            await pool.query(
+                `INSERT INTO associate_referral_points (associate_id, admission_id, student_name, course_fee, points_earned)
+                 VALUES ($1, $2, $3, $4, $5)`,
+                [userId, admissionData.id, (admissionData.full_name || admissionData.student_name), totalFees, points]
+            );
+        } else {
+            // Only update if not yet settled by Admin
+            if (!check.rows[0].is_settled) {
                 await pool.query(
-                    `INSERT INTO associate_referral_points (associate_id, admission_id, student_name, course_fee, points_earned)
-                     VALUES ($1, $2, $3, $4, $5)`,
-                    [associateId, admissionData.id, admissionData.full_name, totalFees, points]
+                    `UPDATE associate_referral_points 
+                     SET points_earned = $1, student_name = $2, course_fee = $3 
+                     WHERE admission_id = $4`,
+                    [points, (admissionData.full_name || admissionData.student_name), totalFees, admissionData.id]
                 );
-                console.log(`✅ 10% Referral points (${points}) awarded to associate ${associateId}`);
             }
         }
     } catch (err) {
@@ -135,7 +158,7 @@ router.post("/", authMiddleware, uploadFields, async (req, res) => {
 
         const result = await pool.query(query, values);
         const newAdmission = result.rows[0];
-        await addReferralPoints(newAdmission, userId);
+        await addReferralPoints(newAdmission);
         res.status(201).json(newAdmission);
     } catch (err) {
         console.error("Admission submission error:", err.message);
@@ -149,6 +172,7 @@ router.post("/", authMiddleware, uploadFields, async (req, res) => {
 // Get all admissions (filtered by role)
 router.get("/", authMiddleware, async (req, res) => {
     try {
+        console.log(`[admissions] GET request from user ID: ${req.user.id}, Role: ${req.user.roleName}`);
         let query = "SELECT * FROM student_admissions";
         let params = [];
         if (req.user.roleName === "Associate") {
@@ -159,7 +183,7 @@ router.get("/", authMiddleware, async (req, res) => {
         const result = await pool.query(query, params);
         res.json(result.rows);
     } catch (err) {
-        console.error(err.message);
+        console.error("[admissions] List error:", err.message);
         res.status(500).json({ error: "Server Error" });
     }
 });
@@ -235,29 +259,46 @@ router.get("/by-enquiry/:enquiry_id", authMiddleware, async (req, res) => {
 // ─── DYNAMIC /:id ROUTES LAST ─────────────────────────────────────────────────
 
 // Update admission (PATCH /:id)
-router.patch("/:id", authMiddleware, async (req, res) => {
+router.patch("/:id", authMiddleware, uploadFields, async (req, res) => {
     try {
         const { id } = req.params;
-        const data = req.body;
+        const data = req.body || {};
+        const files = req.files || {};
+        
         const fields = Object.keys(data).filter(f => !['id', 'created_at', 'created_by_id'].includes(f));
-        if (fields.length === 0) return res.status(400).json({ error: "No fields to update" });
+        
+        // Handle files in PATCH too
+        const fileFields = Object.keys(files);
+        if (fields.length === 0 && fileFields.length === 0) {
+            return res.status(400).json({ error: "No fields to update" });
+        }
 
-        const setClause = fields.map((f, i) => `${f} = $${i + 1}`).join(", ");
+        const setClauseParts = fields.map((f, i) => `${f} = $${i + 1}`);
         const values = fields.map(f => data[f]);
-        values.push(id);
+        
+        // Add file updates to the query if any
+        let counter = values.length + 1;
+        fileFields.forEach(fieldName => {
+            const filePath = files[fieldName][0].path;
+            const dbColumn = fieldName === 'photo_file' ? 'photo_url' : fieldName;
+            setClauseParts.push(`${dbColumn} = $${counter}`);
+            values.push(filePath);
+            counter++;
+        });
 
+        values.push(id);
         const result = await pool.query(
-            `UPDATE student_admissions SET ${setClause} WHERE id = $${values.length} RETURNING *`,
+            `UPDATE student_admissions SET ${setClauseParts.join(", ")} WHERE id = $${values.length} RETURNING *`,
             values
         );
         if (result.rows.length === 0) return res.status(404).json({ error: "Admission not found" });
 
         const updated = result.rows[0];
-        await addReferralPoints(updated, updated.created_by_id);
+        await addReferralPoints(updated);
         res.json(updated);
     } catch (err) {
         console.error("Update admission error:", err.message);
-        res.status(500).json({ error: "Server Error" });
+        res.status(500).json({ error: "Server Error", details: err.message });
     }
 });
 

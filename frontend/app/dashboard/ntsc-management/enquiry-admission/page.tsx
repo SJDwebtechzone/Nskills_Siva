@@ -5,15 +5,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
     Search, Filter, Eye, Trash2, Edit, 
     FileText, User, Calendar, BookOpen, 
-    CheckCircle2, AlertCircle, RefreshCw,
-    GraduationCap, ClipboardList, X
+    CheckCircle2, AlertCircle, RefreshCw, ShieldCheck,
+    GraduationCap, ClipboardList, X, Briefcase, CreditCard
 } from "lucide-react";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 
 const API_BASE = "http://localhost:5000/api";
 
 export default function NTSCEnquiryAdmissionPage() {
+    const router = useRouter();
     const { can } = useAuth();
     const [view, setView] = useState<"enquiry" | "admission">("enquiry");
     const [data, setData] = useState<any[]>([]);
@@ -47,7 +49,7 @@ export default function NTSCEnquiryAdmissionPage() {
 
     const handleDelete = async (item: any) => {
         const type = view === "enquiry" ? "Enquiry" : "Admission";
-        const identifier = view === "enquiry" ? item.enquiry_id : item.enquiry_id; // Both use enquiry_id for display
+        const identifier = view === "enquiry" ? item.enquiry_id : (item.admission_number || item.enquiry_id); // Use admission_number for admissions if available
         const name = view === "enquiry" ? item.student_name : item.full_name;
 
         if (!confirm(`Are you sure you want to delete ${type} for "${name}" (${identifier})?\nThis action is permanent.`)) return;
@@ -65,8 +67,8 @@ export default function NTSCEnquiryAdmissionPage() {
 
     const filteredData = data.filter(item => {
         const q = search.toLowerCase();
-        const name = view === "enquiry" ? item.student_name : item.full_name;
-        const id = item.enquiry_id || "";
+        const name = (view === "enquiry" ? item.student_name : item.full_name) || "";
+        const id = (view === "enquiry" ? item.enquiry_id : item.admission_number) || "";
         return name.toLowerCase().includes(q) || id.toLowerCase().includes(q);
     });
 
@@ -147,16 +149,20 @@ export default function NTSCEnquiryAdmissionPage() {
                                         <td className="py-6 px-8">
                                             <div className="flex items-center gap-4">
                                                 <div className="w-12 h-12 bg-[#0b1f3a] rounded-2xl flex items-center justify-center text-white font-black text-sm group-hover:scale-110 transition-transform">
-                                                    {(view === "enquiry" ? item.student_name : item.full_name)[0].toUpperCase()}
+                                                    {((view === "enquiry" ? item.student_name : item.full_name) || "?")[0].toUpperCase()}
                                                 </div>
                                                 <div>
-                                                    <p className="font-black text-slate-800 text-lg">{view === "enquiry" ? item.student_name : item.full_name}</p>
+                                                    <p className="font-black text-slate-800 text-lg">{(view === "enquiry" ? item.student_name : item.full_name) || "Untitled Record"}</p>
                                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{item.mobile_number || "No contact"}</p>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="py-6 px-8">
-                                            <p className="font-mono font-black text-blue-600">#{item.enquiry_id || "N/A"}</p>
+                                        <td 
+                                            className="py-6 px-8 cursor-pointer hover:bg-slate-50 transition-all rounded-r-3xl"
+                                            onClick={() => setSelectedItem(item)}
+                                            title="View Details"
+                                        >
+                                            <p className="font-mono font-black text-blue-600">#{(view === "enquiry" ? item.enquiry_id : (item.admission_number || item.enquiry_id)) || "N/A"}</p>
                                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
                                                 {new Date(item.created_at).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
                                             </p>
@@ -213,39 +219,140 @@ export default function NTSCEnquiryAdmissionPage() {
                                 <X size={24} />
                             </button>
 
-                            <div className="p-10">
-                                <div className="flex items-center gap-6 mb-8">
+                            <div className="p-10 max-h-[85vh] overflow-y-auto custom-scrollbar">
+                                <div className="flex items-center gap-6 mb-10 pb-6 border-b border-slate-100">
                                     <div className="w-20 h-20 bg-[#0b1f3a] rounded-3xl flex items-center justify-center text-white text-3xl font-black shadow-xl shadow-blue-900/20">
-                                        {(view === "enquiry" ? selectedItem.student_name : selectedItem.full_name)[0].toUpperCase()}
+                                        {((view === "enquiry" ? selectedItem.student_name : selectedItem.full_name) || "?")[0].toUpperCase()}
                                     </div>
                                     <div>
                                         <h3 className="text-3xl font-black text-slate-800 tracking-tight">
-                                            {view === "enquiry" ? selectedItem.student_name : selectedItem.full_name}
+                                            {(view === "enquiry" ? selectedItem.student_name : selectedItem.full_name) || "Untitled Record"}
                                         </h3>
                                         <div className="flex items-center gap-3 mt-1">
                                             <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-[0.15em]">
                                                 {view === "enquiry" ? "Enquiry Record" : "Admission Record"}
                                             </span>
                                             <span className="text-slate-300">|</span>
-                                            <span className="text-slate-400 font-bold text-xs">#{selectedItem.enquiry_id}</span>
+                                            <span className="text-slate-400 font-bold text-xs tracking-widest uppercase">ID: #{(view === "enquiry" ? selectedItem.enquiry_id : (selectedItem.admission_number || selectedItem.enquiry_id)) || "N/A"}</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-8 mb-10">
-                                    <DetailBox label="Mobile Number" value={selectedItem.mobile_number} icon={User} />
-                                    <DetailBox label="Email Address" value={selectedItem.email_id} icon={AlertCircle} />
-                                    <DetailBox label="Desired Course" value={selectedItem.course_interested || selectedItem.course_name} icon={BookOpen} />
-                                    <DetailBox label="Registered On" value={new Date(selectedItem.created_at).toLocaleDateString()} icon={Calendar} />
+                                <div className="space-y-12">
+                                    {/* Personal & Identification */}
+                                    <section>
+                                        <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-6 group">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span> Personal Information
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                            <DetailBox label="Full Name" value={view === "enquiry" ? selectedItem.student_name : selectedItem.full_name} icon={User} />
+                                            <DetailBox label="Gender" value={selectedItem.gender} icon={User} />
+                                            <DetailBox label="Date of Birth" value={selectedItem.dob ? new Date(selectedItem.dob).toLocaleDateString() : "N/A"} icon={Calendar} />
+                                            <DetailBox label="Age" value={selectedItem.age} icon={Calendar} />
+                                            {view === "admission" && (
+                                                <>
+                                                    <DetailBox label="Aadhaar Number" value={selectedItem.aadhaar_number} icon={FileText} />
+                                                    <DetailBox label="Passport No." value={selectedItem.passport_number || "None"} icon={BookOpen} />
+                                                </>
+                                            )}
+                                        </div>
+                                    </section>
+
+                                    {/* Contact & Location */}
+                                    <section>
+                                        <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-6 group">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span> Contact Details
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                            <DetailBox label="Mobile Number" value={selectedItem.mobile_number} icon={User} />
+                                            <DetailBox label="WhatsApp No." value={selectedItem.whatsapp_number} icon={User} />
+                                            <DetailBox label="Email Address" value={selectedItem.email_id} icon={AlertCircle} />
+                                            <div className="md:col-span-2 lg:col-span-3">
+                                                 <DetailBox label="Residential Address" value={`${selectedItem.residential_address || selectedItem.perm_address || ""}, ${selectedItem.city || selectedItem.perm_city || ""}, ${selectedItem.state || selectedItem.perm_state || ""} - ${selectedItem.pin_code || selectedItem.perm_pin || ""}`} icon={FileText} />
+                                            </div>
+                                        </div>
+                                    </section>
+
+                                    {/* Guardian & Background */}
+                                    <section>
+                                        <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-6 group">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span> Guardian & Background
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                            <DetailBox label="Guardian Name" value={selectedItem.parent_name || selectedItem.father_name} icon={User} />
+                                            <DetailBox label="Guardian Mobile" value={selectedItem.parent_mobile || selectedItem.parent_contact} icon={User} />
+                                            <DetailBox label="Occupation" value={selectedItem.occupation || selectedItem.parent_occupation} icon={Briefcase} />
+                                            <DetailBox label="Highest Qual." value={selectedItem.highest_qualification} icon={GraduationCap} />
+                                            <DetailBox label="Institution" value={selectedItem.institution_name} icon={GraduationCap} />
+                                            <DetailBox label="Year of Passing" value={selectedItem.year_of_passing} icon={Calendar} />
+                                        </div>
+                                    </section>
+
+                                    {/* Training & Fees */}
+                                    <section className="p-8 bg-slate-50 rounded-[2rem] border border-slate-100">
+                                        <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-6 group">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span> Course & Financials
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                            <DetailBox label="Selected Course" value={selectedItem.course_interested || selectedItem.course_name} icon={BookOpen} />
+                                            <DetailBox label="Training Mode" value={selectedItem.mode_of_training || selectedItem.training_mode} icon={RefreshCw} />
+                                            <DetailBox label="Counsellor" value={selectedItem.counsellor_name} icon={CheckCircle2} />
+                                            
+                                            {view === "admission" && (
+                                                <>
+                                                    <div className="p-4 bg-white rounded-2xl shadow-sm border border-slate-100">
+                                                        <DetailBox label="Total Course Fee" value={`₹ ${parseFloat(selectedItem.total_fees || 0).toLocaleString()}`} icon={RefreshCw} />
+                                                    </div>
+                                                    <div className="p-4 bg-green-50 rounded-2xl shadow-sm border border-green-100">
+                                                        <DetailBox label="Fees Paid" value={`₹ ${parseFloat(selectedItem.paid_fees || 0).toLocaleString()}`} icon={CheckCircle2} />
+                                                    </div>
+                                                    <div className="p-4 bg-red-50 rounded-2xl shadow-sm border border-red-100">
+                                                        <DetailBox label="Balance Amount" value={`₹ ${parseFloat(selectedItem.balance_amount || 0).toLocaleString()}`} icon={AlertCircle} />
+                                                    </div>
+                                                    <div className="md:col-span-3 grid grid-cols-2 gap-4">
+                                                        <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+                                                            <DetailBox label="Instalment 1" value={`₹ ${parseFloat(selectedItem.instalment_1 || 0).toLocaleString()}`} icon={CreditCard || RefreshCw} />
+                                                        </div>
+                                                        <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+                                                            <DetailBox label="Instalment 2" value={`₹ ${parseFloat(selectedItem.instalment_2 || 0).toLocaleString()}`} icon={CreditCard || RefreshCw} />
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            )}
+                                            {view === "enquiry" && (
+                                                <DetailBox label="Interest Level" value={selectedItem.interest_level} icon={AlertCircle} />
+                                            )}
+                                        </div>
+                                    </section>
+
+                                    {/* Office Internal Section — ONLY for Admissions */}
                                     {view === "admission" && (
-                                        <>
-                                            <DetailBox label="Total Fees" value={`₹ ${selectedItem.total_fees}`} icon={RefreshCw} />
-                                            <DetailBox label="Balance Amount" value={`₹ ${selectedItem.balance_amount}`} icon={AlertCircle} />
-                                        </>
+                                        <section className="p-8 bg-blue-50/50 rounded-[2rem] border border-blue-100/50">
+                                            <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-700 mb-6 group">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-blue-700"></span> Office Internal Details
+                                            </h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                                <DetailBox label="Admission Number" value={selectedItem.admission_number} icon={ShieldCheck} />
+                                                <DetailBox label="Batch Allotted" value={selectedItem.batch_allotted} icon={Calendar} />
+                                                <DetailBox label="Verified By" value={selectedItem.verified_by} icon={User} />
+                                                <div className="md:col-span-2 lg:col-span-3">
+                                                    <DetailBox label="Authorized Signatory" value={selectedItem.authorized_signature_by} icon={FileText} />
+                                                </div>
+                                            </div>
+                                        </section>
+                                    )}
+
+                                    {selectedItem.remarks && (
+                                        <section>
+                                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-3 ml-1">Internal Remarks</h4>
+                                            <div className="p-6 bg-amber-50 rounded-2xl border border-amber-100 text-sm font-medium text-amber-900 italic">
+                                                "{selectedItem.remarks}"
+                                            </div>
+                                        </section>
                                     )}
                                 </div>
 
-                                <div className="flex gap-4">
+                                <div className="flex gap-4 mt-12 pt-8 border-t border-slate-100">
                                     <button 
                                         onClick={() => setSelectedItem(null)}
                                         className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-all"
@@ -254,12 +361,15 @@ export default function NTSCEnquiryAdmissionPage() {
                                     </button>
                                     <button 
                                         onClick={() => {
-                                            // Optional: Redirect to edit page
-                                            alert("Full editing available in Associate Management section for Admins.");
+                                            const path = view === "enquiry" 
+                                                ? "/dashboard/associate-management/enquiry" 
+                                                : "/dashboard/associate-management/admission";
+                                            router.push(path);
+                                            setSelectedItem(null);
                                         }}
                                         className="flex-1 py-4 bg-[#0b1f3a] text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-all shadow-lg"
                                     >
-                                        Full Edit
+                                        Go to Management
                                     </button>
                                 </div>
                             </div>

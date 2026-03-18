@@ -148,13 +148,14 @@ export default function StudentAdmissionForm() {
 
     // Auto-calculate balance
     useEffect(() => {
+        if (user?.role === "Super Admin") return; // Allow Super Admin to edit manually
         const total = parseFloat(formData.total_fees) || 0;
         const paid = parseFloat(formData.paid_fees) || 0;
         const inst1 = parseFloat(formData.instalment_1) || 0;
         const inst2 = parseFloat(formData.instalment_2) || 0;
         const balance = total - (paid + inst1 + inst2);
         setFormData((prev: any) => ({ ...prev, balance_amount: balance.toString() }));
-    }, [formData.total_fees, formData.paid_fees, formData.instalment_1, formData.instalment_2]);
+    }, [formData.total_fees, formData.paid_fees, formData.instalment_1, formData.instalment_2, user]);
 
     const fetchAdmissions = async () => {
         setIsLoadingList(true);
@@ -671,7 +672,7 @@ export default function StudentAdmissionForm() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="border-b-2 border-slate-200">
-                                <th className="py-4 px-4 font-black text-slate-900 uppercase text-xs tracking-wider">Enquiry ID</th>
+                                <th className="py-4 px-4 font-black text-slate-900 uppercase text-xs tracking-wider">Admission ID</th>
                                 <th className="py-4 px-4 font-black text-slate-900 uppercase text-xs tracking-wider">Student Name</th>
                                 <th className="py-4 px-4 font-black text-slate-900 uppercase text-xs tracking-wider">Course</th>
                                 <th className="py-4 px-4 font-black text-slate-900 uppercase text-xs tracking-wider text-right">Balance</th>
@@ -681,7 +682,7 @@ export default function StudentAdmissionForm() {
                         <tbody>
                             {admissions.map((adm) => (
                                 <tr key={adm.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                                    <td className="py-5 px-4 font-mono text-blue-700 font-black">{adm.enquiry_id}</td>
+                                    <td className="py-5 px-4 font-mono text-blue-700 font-black">{adm.admission_number || adm.enquiry_id}</td>
                                     <td className="py-5 px-4 font-black text-slate-900">{adm.full_name || adm.student_name}</td>
                                     <td className="py-5 px-4 text-slate-700 font-bold">{adm.course_name || adm.course_interested}</td>
                                     <td className="py-5 px-4 text-right">
@@ -852,41 +853,150 @@ export default function StudentAdmissionForm() {
                     >
                         <motion.div 
                             initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
-                            className="bg-white rounded-[2rem] w-full max-w-4xl max-h-[90vh] overflow-y-auto relative"
+                            className="bg-white rounded-[2.5rem] w-full max-w-5xl max-h-[90vh] overflow-y-auto relative custom-scrollbar shadow-2xl"
                         >
                             <button 
                                 onClick={() => setSelectedAdmission(null)}
-                                className="absolute top-6 right-6 p-2 text-slate-400 hover:text-red-500 transition-colors"
+                                className="absolute top-8 right-8 p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all z-20"
                             >
-                                <X size={24} />
+                                <X size={28} />
                             </button>
                             
-                            <div className="p-10">
-                                <div className="flex items-center gap-4 mb-8">
-                                    <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 font-bold">
-                                        <User size={32} />
+                            <div className="p-12">
+                                {/* Hero Header */}
+                                <div className="flex flex-col md:flex-row items-center gap-8 mb-12 pb-12 border-b border-slate-100">
+                                    <div className="w-28 h-28 bg-[#0b1f3a] rounded-[2rem] flex items-center justify-center text-white text-4xl font-black shadow-2xl shadow-blue-900/20">
+                                        {(selectedAdmission.full_name || selectedAdmission.student_name || "?")[0].toUpperCase()}
                                     </div>
-                                    <div>
-                                        <h3 className="text-2xl font-black text-slate-800">{selectedAdmission.full_name}</h3>
-                                        <p className="text-blue-600 font-bold text-xs uppercase tracking-widest">Enquiry ID: {selectedAdmission.enquiry_id}</p>
+                                    <div className="text-center md:text-left">
+                                        <h3 className="text-4xl font-black text-slate-800 tracking-tight">{selectedAdmission.full_name || selectedAdmission.student_name}</h3>
+                                        <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-3">
+                                            <span className="px-4 py-1.5 bg-blue-50 text-blue-600 rounded-full text-[11px] font-black uppercase tracking-[0.15em] border border-blue-100">
+                                                Admission ID: #{selectedAdmission.admission_number || selectedAdmission.enquiry_id}
+                                            </span>
+                                            <span className={`px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-[0.15em] border ${parseFloat(selectedAdmission.balance_amount) === 0 ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
+                                                {parseFloat(selectedAdmission.balance_amount) === 0 ? 'Fully Paid' : `Balance: ₹${selectedAdmission.balance_amount}`}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                    <div className="space-y-6">
-                                        <DetailRow label="Gender" value={selectedAdmission.gender} />
-                                        <DetailRow label="DOB" value={new Date(selectedAdmission.dob).toLocaleDateString()} />
-                                        <DetailRow label="Mobile" value={selectedAdmission.mobile_number} />
-                                        <DetailRow label="Email" value={selectedAdmission.email_id} />
-                                        <DetailRow label="Address" value={`${selectedAdmission.residential_address}, ${selectedAdmission.city}, ${selectedAdmission.state}`} />
-                                    </div>
-                                    <div className="space-y-6">
-                                        <DetailRow label="Course" value={selectedAdmission.course_name || selectedAdmission.course_interested} />
-                                        <DetailRow label="Total Fees" value={`₹ ${selectedAdmission.total_fees}`} />
-                                        <DetailRow label="Paid Fees" value={`₹ ${selectedAdmission.paid_fees}`} />
-                                        <DetailRow label="Balance" value={`₹ ${selectedAdmission.balance_amount}`} color={parseFloat(selectedAdmission.balance_amount) === 0 ? 'text-green-600' : 'text-red-500'} />
-                                        <DetailRow label="Status" value={selectedAdmission.status || 'Approved'} bold />
-                                    </div>
+                                <div className="space-y-16">
+                                    {/* Section A: Personal Information */}
+                                    <section>
+                                        <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.25em] text-blue-600 mb-8">
+                                            <span className="w-2 h-2 rounded-full bg-blue-600"></span> 1. Personal & Identification
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+                                            <DetailRow label="Gender" value={selectedAdmission.gender} />
+                                            <DetailRow label="Date of Birth" value={selectedAdmission.dob ? new Date(selectedAdmission.dob).toLocaleDateString() : 'N/A'} />
+                                            <DetailRow label="Age" value={selectedAdmission.age} />
+                                            <DetailRow label="Aadhaar No." value={selectedAdmission.aadhaar_number} />
+                                            <DetailRow label="Passport No." value={selectedAdmission.passport_number || "None"} />
+                                            <DetailRow label="Passport Val." value={selectedAdmission.passport_validity ? new Date(selectedAdmission.passport_validity).toLocaleDateString() : "N/A"} />
+                                        </div>
+                                    </section>
+
+                                    {/* Section B & C: Contact & Guardian */}
+                                    <section>
+                                        <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.25em] text-blue-600 mb-8">
+                                            <span className="w-2 h-2 rounded-full bg-blue-600"></span> 2. Contact & Guardian Details
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+                                            <DetailRow label="Mobile" value={selectedAdmission.mobile_number} fontMono />
+                                            <DetailRow label="WhatsApp" value={selectedAdmission.whatsapp_number} fontMono />
+                                            <DetailRow label="Email" value={selectedAdmission.email_id} />
+                                            <DetailRow label="City" value={selectedAdmission.city} />
+                                            <div className="md:col-span-2 lg:col-span-2">
+                                                <DetailRow label="Full Address" value={`${selectedAdmission.residential_address}, ${selectedAdmission.state} - ${selectedAdmission.pin_code}`} />
+                                            </div>
+                                            <DetailRow label="Guardian" value={selectedAdmission.parent_name} />
+                                            <DetailRow label="Relation" value={selectedAdmission.relationship} />
+                                            <DetailRow label="Guardian Mob." value={selectedAdmission.parent_mobile} fontMono />
+                                            <DetailRow label="Occupation" value={selectedAdmission.occupation} />
+                                        </div>
+                                    </section>
+
+                                    {/* Section D & E: Education & Experience */}
+                                    <section>
+                                        <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.25em] text-blue-600 mb-8">
+                                            <span className="w-2 h-2 rounded-full bg-blue-600"></span> 3. Education & Skills
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                                            <DetailRow label="Qualification" value={selectedAdmission.highest_qualification} />
+                                            <DetailRow label="Passing Year" value={selectedAdmission.year_of_passing} />
+                                            <DetailRow label="Institution" value={selectedAdmission.institution_name} />
+                                            <DetailRow label="Board/Univ." value={selectedAdmission.board_university} />
+                                            <DetailRow label="Medium" value={selectedAdmission.medium_of_study} />
+                                            <DetailRow label="Experience" value={selectedAdmission.total_experience || "Fresher"} />
+                                        </div>
+                                        <div className="mt-10 p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                                            <DetailRow label="Technical Background" value={selectedAdmission.technical_background || "Not specified"} />
+                                        </div>
+                                    </section>
+
+                                    {/* Section F & G: Course & Career */}
+                                    <section>
+                                        <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.25em] text-blue-600 mb-8">
+                                            <span className="w-2 h-2 rounded-full bg-blue-600"></span> 4. Course & Career Goals
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                                            <div className="p-6 bg-blue-50 rounded-2xl border border-blue-100">
+                                                <DetailRow label="Selected Course" value={selectedAdmission.course_interested} bold />
+                                            </div>
+                                            <DetailRow label="Level" value={selectedAdmission.course_level} />
+                                            <DetailRow label="Mode" value={selectedAdmission.mode_of_training} />
+                                            <DetailRow label="Career Goal" value={selectedAdmission.career_goal} />
+                                            <DetailRow label="Willing to Relocate?" value={selectedAdmission.willing_to_relocate} />
+                                            <DetailRow label="Expected Salary" value={selectedAdmission.expected_salary || "N/A"} />
+                                        </div>
+                                    </section>
+
+                                    {/* Section I & J: Financials */}
+                                    <section className="p-10 bg-[#0b1f3a] rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden">
+                                        <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.25em] text-blue-300 mb-8 relative z-10">
+                                            <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span> 5. Fee & Payment Details
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 relative z-10">
+                                            <DetailRow label="Total Fees" value={`₹ ${parseFloat(selectedAdmission.total_fees || 0).toLocaleString()}`} light />
+                                            <DetailRow label="Paid Amount" value={`₹ ${parseFloat(selectedAdmission.paid_fees || 0).toLocaleString()}`} color="text-green-400" />
+                                            <DetailRow label="Balance" value={`₹ ${parseFloat(selectedAdmission.balance_amount || 0).toLocaleString()}`} color="text-red-400" bold />
+                                            <DetailRow label="Payment Mode" value={selectedAdmission.payment_mode} light />
+                                            <DetailRow label="Reference No." value={selectedAdmission.payment_ref_no || "N/A"} light />
+                                            <DetailRow label="Payment Date" value={selectedAdmission.payment_date ? new Date(selectedAdmission.payment_date).toLocaleDateString() : "N/A"} light />
+                                        </div>
+                                        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl"></div>
+                                    </section>
+
+                                    {/* Emergency */}
+                                    <section className="p-8 bg-red-50 rounded-2xl border border-red-100">
+                                        <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.25em] text-red-600 mb-6">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-red-600"></span> Emergency Contact
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-red-900">
+                                            <DetailRow label="Contact Name" value={selectedAdmission.emergency_contact_name} color="text-red-800" />
+                                            <DetailRow label="Contact Number" value={selectedAdmission.emergency_contact_number} color="text-red-800" fontMono />
+                                            <DetailRow label="Authorized" value={selectedAdmission.emergency_authorized ? "Yes" : "No"} color="text-red-800" />
+                                        </div>
+                                    </section>
+                                </div>
+
+                                <div className="mt-16 pt-8 border-t border-slate-100 flex gap-4">
+                                    <button 
+                                        onClick={() => setSelectedAdmission(null)}
+                                        className="flex-1 py-5 bg-slate-100 text-slate-600 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-slate-200 transition-all"
+                                    >
+                                        Close Details
+                                    </button>
+                                    <button 
+                                        onClick={() => {
+                                            handleEdit(selectedAdmission);
+                                            setSelectedAdmission(null);
+                                        }}
+                                        className="flex-1 py-5 bg-[#0b1f3a] text-white rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-blue-900 transition-all shadow-xl shadow-blue-900/10"
+                                    >
+                                        Edit Full Record
+                                    </button>
                                 </div>
                             </div>
                         </motion.div>
@@ -920,10 +1030,12 @@ export default function StudentAdmissionForm() {
 }
 
 // Helper Detail Row
-const DetailRow = ({ label, value, color = "text-slate-700", bold = false }: any) => (
-    <div className="flex flex-col gap-1 border-b border-slate-100 pb-3">
-        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
-        <span className={`text-sm font-bold ${color} ${bold ? 'font-black uppercase tracking-wide' : ''}`}>{value || "---"}</span>
+const DetailRow = ({ label, value, color = "text-slate-700", bold = false, fontMono = false, light = false }: any) => (
+    <div className={`flex flex-col gap-1.5 ${light ? 'border-none' : 'border-b border-slate-100'} pb-3`}>
+        <span className={`text-[10px] font-black uppercase tracking-widest ${light ? 'text-blue-300/80' : 'text-slate-400'}`}>{label}</span>
+        <span className={`text-[13px] ${bold ? 'font-black tracking-tighter text-lg' : 'font-bold'} ${fontMono ? 'font-mono' : ''} ${color} ${light && color === "text-slate-700" ? 'text-white' : ''}`}>
+            {value || "---"}
+        </span>
     </div>
 );
 

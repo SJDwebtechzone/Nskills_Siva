@@ -108,11 +108,17 @@ router.put("/banners/:id/status", async (req, res) => {
 // Get all popups
 router.get("/popups", async (req, res) => {
     try {
-        const result = await pool.query("SELECT id, image_url, video_url, title, content as description, link_url as course_id, is_active, manual_override, placement FROM popups ORDER BY created_at DESC");
+        const result = await pool.query(`
+            SELECT id, image_url, video_url, title, 
+                   description, course_id, is_active, 
+                   manual_override, placement 
+            FROM popups 
+            ORDER BY created_at DESC
+        `);
         res.json(result.rows);
     } catch (err) {
-        console.error("[popups] DB error:", err.message);
-        res.json([]); // Return empty array so frontend degrades gracefully
+        console.error("[popups] Fetch error:", err.message);
+        res.status(200).json([]); // Return empty array so frontend degrades gracefully
     }
 });
 
@@ -123,13 +129,13 @@ router.post("/popups", uploadPopup.single("video"), async (req, res) => {
         const video_url = req.file ? `http://localhost:5000/uploads/popups/${req.file.filename}` : "";
         
         const result = await pool.query(
-            "INSERT INTO popups (video_url, title, content, link_url, manual_override, placement) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, video_url, title, content as description, link_url as course_id, is_active, manual_override, placement",
+            "INSERT INTO popups (video_url, title, description, course_id, manual_override, placement) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
             [video_url, title, description, course_id, manual_override || false, placement || "Intro"]
         );
         res.json(result.rows[0]);
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send("Server Error");
+        console.error("[popups] Create error:", err.message);
+        res.status(500).json({ error: "Server Error" });
     }
 });
 
@@ -305,6 +311,51 @@ router.delete("/accreditations/:id", async (req, res) => {
     } catch (err) {
         console.error(err.message);
         res.status(500).send("Server Error");
+    }
+});
+
+// --- Contact Info ---
+
+// Get current contact info
+router.get("/contact-info", async (req, res) => {
+    try {
+        const result = await pool.query("SELECT * FROM contact_info ORDER BY id LIMIT 1");
+        res.json(result.rows[0] || {});
+    } catch (err) {
+        console.error("[contact-info] DB error:", err.message);
+        res.json({}); 
+    }
+});
+
+// Update contact info 
+router.post("/contact-info", async (req, res) => {
+    try {
+        const { company_name, address, primary_phone, secondary_phone, whatsapp_number, email, map_embed_url, facebook_url, twitter_url, instagram_url, linkedin_url } = req.body;
+
+        const check = await pool.query("SELECT id FROM contact_info LIMIT 1");
+        
+        if (check.rows.length === 0) {
+            await pool.query(`
+                INSERT INTO contact_info (
+                    company_name, address, primary_phone, secondary_phone, whatsapp_number, 
+                    email, map_embed_url, facebook_url, twitter_url, instagram_url, linkedin_url
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+                [company_name, address, primary_phone, secondary_phone, whatsapp_number, email, map_embed_url, facebook_url, twitter_url, instagram_url, linkedin_url]
+            );
+        } else {
+            await pool.query(`
+                UPDATE contact_info SET 
+                    company_name = $1, address = $2, primary_phone = $3, secondary_phone = $4, whatsapp_number = $5,
+                    email = $6, map_embed_url = $7, facebook_url = $8, twitter_url = $9, instagram_url = $10, linkedin_url = $11,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = $12`,
+                [company_name, address, primary_phone, secondary_phone, whatsapp_number, email, map_embed_url, facebook_url, twitter_url, instagram_url, linkedin_url, check.rows[0].id]
+            );
+        }
+        res.json({ message: "Contact info updated successfully" });
+    } catch (err) {
+        console.error("[contact-info] Update error:", err.message);
+        res.status(500).json({ error: "Server Error" });
     }
 });
 

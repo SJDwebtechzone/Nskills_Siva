@@ -3,11 +3,12 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { motion, Variants } from "framer-motion";
 import { MapPin, Phone, Mail, Send, RotateCcw, RefreshCw } from "lucide-react";
-import { contactInfo } from "@/data/contactInfo";
 
 
 const ContactPage: React.FC = () => {
     const [captcha, setCaptcha] = useState<string>("");
+    const [contact, setContact] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
 
     const generateCaptcha = useCallback(() => {
         const characters = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
@@ -20,7 +21,29 @@ const ContactPage: React.FC = () => {
 
     useEffect(() => {
         generateCaptcha();
+        fetchContact();
     }, [generateCaptcha]);
+
+    const fetchContact = async () => {
+        try {
+            const res = await fetch("http://localhost:5000/api/settings/contact-info");
+            const data = await res.json();
+            setContact(data);
+        } catch (err) {
+            console.error("Failed to load contact info", err);
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+    // Fallback while loading or error
+    const displayData = contact || {
+        address: "361/3, Pillayar Kovil Street, Raghavendra Nagar, Chennai.",
+        primary_phone: "+91 98842 09774",
+        secondary_phone: "+91 80560 63023",
+        email: "nskilltraining@gmail.com",
+        map_embed_url: ""
+    };
 
     const cardVariants: Variants = {
         hidden: { opacity: 0, y: 20 },
@@ -67,7 +90,7 @@ const ContactPage: React.FC = () => {
                             <div>
                                 <h3 className="text-lg font-bold text-[#0b1f3a] mb-1">Office Location</h3>
                                 <p className="text-sm text-gray-600">
-                                    {contactInfo.address}
+                                    {displayData.address}
                                 </p>
 
                             </div>
@@ -87,9 +110,10 @@ const ContactPage: React.FC = () => {
                             </div>
                             <div>
                                 <h3 className="text-lg font-bold text-[#0b1f3a] mb-1">Phone</h3>
-                                {contactInfo.phones.map((phone, idx) => (
-                                    <p key={idx} className="text-sm text-gray-600 font-semibold">{phone.value}</p>
-                                ))}
+                                <p className="text-sm text-gray-600 font-semibold">{displayData.primary_phone}</p>
+                                {displayData.secondary_phone && (
+                                    <p className="text-sm text-gray-600 font-semibold">{displayData.secondary_phone}</p>
+                                )}
 
                             </div>
                         </motion.div>
@@ -108,7 +132,7 @@ const ContactPage: React.FC = () => {
                             </div>
                             <div>
                                 <h3 className="text-lg font-bold text-[#0b1f3a] mb-1">Email</h3>
-                                <p className="text-sm text-gray-600 font-semibold">{contactInfo.email}</p>
+                                <p className="text-sm text-gray-600 font-semibold">{displayData.email}</p>
 
                             </div>
                         </motion.div>
@@ -211,8 +235,7 @@ const ContactPage: React.FC = () => {
                 <div className="w-full h-[400px] bg-gray-200 relative rounded-2xl overflow-hidden shadow-md">
                     <iframe
                         title="N-Skill India Location"
-                        src={contactInfo.mapEmbedUrl}
-
+                        src={displayData.map_embed_url || "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3887.355152504856!2d80.1293214!3d13.012892!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a525fdf8e6b19a3%3A0x6b7b2586e3f1e1e!2sPillayar%20Kovil%20St%2C%20Chennai%2C%20Tamil%20Nadu!5e0!3m2!1sen!2sin!4v1709476000000!5m2!1sen!2sin"}
                         width="100%"
                         height="100%"
                         style={{ border: 0 }}

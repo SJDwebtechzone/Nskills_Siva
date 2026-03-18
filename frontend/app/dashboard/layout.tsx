@@ -14,6 +14,7 @@ import {
   CreditCard,
   Users,
   Settings,
+  Phone,
   ChevronDown,
   ChevronRight,
   UserCheck,
@@ -76,6 +77,7 @@ const websiteSettingsItems = [
   { name: "Feature Popup",  path: "/dashboard/settings?tab=popup",         module: "Feature Popup",  icon: Layers,    tab: "popup"           },
   { name: "Latest News",     path: "/dashboard/settings?tab=news",          module: "Latest News",     icon: Settings,  tab: "news"            },
   { name: "Accreditions",  path: "/dashboard/settings?tab=accreditations",module: "Accreditions",  icon: Award,     tab: "accreditations"  },
+  { name: "Contact Info",    path: "/dashboard/settings/contact-info",      module: "Home",            icon: Phone,     tab: null              },
 ];
 
 const associateManagementItems = [
@@ -245,6 +247,7 @@ function DashboardLayoutContent({ children }: DashboardLayoutProps) {
     if (name === "Feature Popup")  return pathname.includes("/dashboard/settings") && tabParam === "popup";
     if (name === "Latest News")     return pathname.includes("/dashboard/settings") && tabParam === "news";
     if (name === "Accreditions")  return pathname.includes("/dashboard/settings") && tabParam === "accreditations";
+    if (name === "Contact Info")    return pathname.includes("/dashboard/settings/contact-info");
     return false;
   };
 

@@ -5,8 +5,9 @@ import { motion } from "framer-motion";
 import { 
     Users, ClipboardList, TrendingUp, ArrowUpRight, 
     UserPlus, CheckCircle2, Clock, Calendar, 
-    Briefcase, Award, ShieldCheck
+    Briefcase, Award, ShieldCheck, Eye, X, BookOpen, User, RefreshCw, AlertCircle, FileText, GraduationCap
 } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
 import axios from "axios";
 import Link from "next/link";
 
@@ -19,9 +20,12 @@ export default function AssociateDashboard() {
         pendingFees: 0,
         totalPoints: 0,
         recentEnquiries: [] as any[],
-        recentAdmissions: [] as any[]
+        recentAdmissions: [] as any[],
+        recentPoints: [] as any[]
     });
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedItem, setSelectedItem] = useState<any>(null);
+    const [viewType, setViewType] = useState<"enquiry" | "admission" | null>(null);
 
     const getAuthHeaders = () => {
         const token = localStorage.getItem("token");
@@ -34,27 +38,41 @@ export default function AssociateDashboard() {
 
     const fetchStats = async () => {
         setIsLoading(true);
+        const newStats = { ...stats };
         try {
-            // Fetch Enquiries
-            const enqRes = await axios.get(`${API_BASE}/enquiries`, { headers: getAuthHeaders() });
-            // Fetch Admissions
-            const admRes = await axios.get(`${API_BASE}/admissions`, { headers: getAuthHeaders() });
-            // Fetch Referral Points
-            const pointsRes = await axios.get(`${API_BASE}/admissions/referral-points/my`, { headers: getAuthHeaders() });
+            try {
+                const enqRes = await axios.get(`${API_BASE}/enquiries`, { headers: getAuthHeaders() });
+                newStats.recentEnquiries = enqRes.data.slice(0, 10);
+                newStats.totalEnquiries = enqRes.data.length;
+            } catch (err: any) {
+                console.error("Enquiries fetch failed:", err);
+                const msg = err.response?.data?.error || err.message;
+                alert(`Dashboard - Enquiries Error: ${msg}`);
+            }
 
-            const totalPoints = pointsRes.data.reduce((acc: number, curr: any) => acc + parseFloat(curr.points_earned), 0);
-            const pendingFeesCount = admRes.data.filter((a: any) => parseFloat(a.balance_amount) > 0).length;
+            try {
+                const admRes = await axios.get(`${API_BASE}/admissions`, { headers: getAuthHeaders() });
+                newStats.recentAdmissions = admRes.data.slice(0, 10);
+                newStats.totalAdmissions = admRes.data.length;
+                newStats.pendingFees = admRes.data.filter((a: any) => parseFloat(a.balance_amount || 0) > 0).length;
+            } catch (err: any) {
+                console.error("Admissions fetch failed:", err);
+                const msg = err.response?.data?.error || err.message;
+                alert(`Dashboard - Admissions Error: ${msg}`);
+            }
 
-            setStats({
-                totalEnquiries: enqRes.data.length,
-                totalAdmissions: admRes.data.length,
-                pendingFees: pendingFeesCount,
-                totalPoints: totalPoints,
-                recentEnquiries: enqRes.data.slice(0, 5),
-                recentAdmissions: admRes.data.slice(0, 5)
-            });
+            try {
+                const pointsRes = await axios.get(`${API_BASE}/admissions/referral-points/my`, { headers: getAuthHeaders() });
+                newStats.recentPoints = pointsRes.data;
+                const totalPoints = pointsRes.data.reduce((acc: number, curr: any) => acc + (parseFloat(curr.points_earned) || 0), 0);
+                newStats.totalPoints = totalPoints;
+            } catch (err: any) {
+                console.error("Points fetch failed:", err);
+            }
+
+            setStats(newStats);
         } catch (err) {
-            console.error("Failed to fetch dashboard stats", err);
+            console.error("Critical Dashboard Stats Fetch Error:", err);
         } finally {
             setIsLoading(false);
         }
@@ -156,26 +174,33 @@ export default function AssociateDashboard() {
                         </h3>
                         <Link href="/dashboard/associate-management/enquiry" className="text-xs font-bold text-blue-600 hover:underline">View All</Link>
                     </div>
-                    <div className="overflow-x-auto">
+                    <div className="max-h-[350px] overflow-y-auto custom-scrollbar">
                         <table className="w-full text-left border-collapse">
-                            <thead className="bg-slate-50/50">
+                            <thead className="bg-slate-50/50 sticky top-0 z-10 backdrop-blur-md">
                                 <tr>
-                                    <th className="py-4 px-8 font-black uppercase text-[10px] tracking-widest text-slate-400">Student</th>
+                                    <th className="py-4 px-8 font-black uppercase text-[10px] tracking-widest text-slate-400">Student Enrollment</th>
                                     <th className="py-4 px-4 font-black uppercase text-[10px] tracking-widest text-slate-400">Course</th>
-                                    <th className="py-4 px-8 font-black uppercase text-[10px] tracking-widest text-slate-400">Date</th>
+                                    <th className="py-4 px-8 font-black uppercase text-[10px] tracking-widest text-slate-400 text-right">Details</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {stats.recentEnquiries.length === 0 ? (
                                     <tr><td colSpan={3} className="py-10 text-center text-slate-300 font-bold">No enquiries found</td></tr>
                                 ) : stats.recentEnquiries.map((enq, i) => (
-                                    <tr key={enq.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-all">
+                                    <tr key={enq.id} className="border-b border-slate-50 hover:bg-blue-50/20 transition-all group">
                                         <td className="py-4 px-8">
                                             <div className="font-bold text-slate-800">{enq.student_name}</div>
-                                            <div className="text-[10px] font-mono text-blue-600">{enq.enquiry_id}</div>
+                                            <div className="text-[10px] font-mono text-blue-600 font-black">ID: {enq.enquiry_id}</div>
                                         </td>
-                                        <td className="py-4 px-4 text-xs font-bold text-slate-500">{enq.course_interested}</td>
-                                        <td className="py-4 px-8 text-xs font-bold text-slate-400">{new Date(enq.created_at).toLocaleDateString()}</td>
+                                        <td className="py-4 px-4 text-xs font-bold text-slate-500">{enq.course_interested || "General"}</td>
+                                        <td className="py-4 px-8 text-right">
+                                            <button 
+                                                onClick={() => { setSelectedItem(enq); setViewType("enquiry"); }}
+                                                className="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm group-hover:scale-110"
+                                            >
+                                                <Eye size={16} />
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -191,34 +216,37 @@ export default function AssociateDashboard() {
                         </h3>
                         <Link href="/dashboard/associate-management/admission" className="text-xs font-bold text-green-600 hover:underline">View All</Link>
                     </div>
-                    <div className="overflow-x-auto">
+                    <div className="max-h-[350px] overflow-y-auto custom-scrollbar">
                         <table className="w-full text-left border-collapse">
-                            <thead className="bg-slate-50/50">
+                            <thead className="bg-slate-50/50 sticky top-0 z-10 backdrop-blur-md">
                                 <tr>
-                                    <th className="py-4 px-8 font-black uppercase text-[10px] tracking-widest text-slate-400">Student</th>
-                                    <th className="py-4 px-4 font-black uppercase text-[10px] tracking-widest text-slate-400">Amount</th>
-                                    <th className="py-4 px-8 font-black uppercase text-[10px] tracking-widest text-slate-400">Status</th>
+                                    <th className="py-4 px-8 font-black uppercase text-[10px] tracking-widest text-slate-400">Student Profile</th>
+                                    <th className="py-4 px-4 font-black uppercase text-[10px] tracking-widest text-slate-400">Financials</th>
+                                    <th className="py-4 px-8 font-black uppercase text-[10px] tracking-widest text-slate-400 text-right">Details</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {stats.recentAdmissions.length === 0 ? (
                                     <tr><td colSpan={3} className="py-10 text-center text-slate-300 font-bold">No admissions found</td></tr>
                                 ) : stats.recentAdmissions.map((adm, i) => (
-                                    <tr key={adm.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-all">
+                                    <tr key={adm.id} className="border-b border-slate-50 hover:bg-green-50/20 transition-all group">
                                         <td className="py-4 px-8">
                                             <div className="font-bold text-slate-800">{adm.full_name}</div>
-                                            <div className="text-[10px] font-mono text-green-600">{adm.enquiry_id}</div>
+                                            <div className="text-[10px] font-mono text-green-600 font-black">ID: {adm.enquiry_id}</div>
                                         </td>
                                         <td className="py-4 px-4">
-                                            <div className="text-xs font-bold text-slate-800">₹ {adm.total_fees}</div>
-                                            <div className={`text-[9px] font-black uppercase ${parseFloat(adm.balance_amount) === 0 ? 'text-green-600' : 'text-red-500'}`}>
-                                                Bal: ₹ {adm.balance_amount}
+                                            <div className="text-xs font-black text-slate-700 font-mono">₹ {(parseFloat(adm.total_fees) || 0).toLocaleString()}</div>
+                                            <div className={`text-[9px] font-black uppercase tracking-tighter ${(parseFloat(adm.balance_amount) || 0) === 0 ? 'text-green-600' : 'text-red-500'}`}>
+                                                Bal: ₹ {(parseFloat(adm.balance_amount) || 0).toLocaleString()}
                                             </div>
                                         </td>
-                                        <td className="py-4 px-8">
-                                            <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${parseFloat(adm.balance_amount) === 0 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
-                                                {parseFloat(adm.balance_amount) === 0 ? 'Completed' : 'Partial'}
-                                            </span>
+                                        <td className="py-4 px-8 text-right">
+                                            <button 
+                                                onClick={() => { setSelectedItem(adm); setViewType("admission"); }}
+                                                className="p-2.5 bg-green-50 text-green-600 rounded-xl hover:bg-green-600 hover:text-white transition-all shadow-sm group-hover:scale-110"
+                                            >
+                                                <Eye size={16} />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
@@ -227,9 +255,158 @@ export default function AssociateDashboard() {
                     </div>
                 </div>
             </div>
+
+            {/* Quick View Modal */}
+            <AnimatePresence>
+                {selectedItem && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-sm">
+                        <motion.div 
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl relative"
+                        >
+                            <button 
+                                onClick={() => { setSelectedItem(null); setViewType(null); }}
+                                className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-all"
+                            >
+                                <X size={24} />
+                            </button>
+
+                            <div className="p-10 max-h-[85vh] overflow-y-auto custom-dashboard-modal-scroll">
+                                <div className="flex items-center gap-6 mb-10 pb-6 border-b border-slate-100">
+                                    <div className="w-20 h-20 bg-[#0b1f3a] rounded-3xl flex items-center justify-center text-white text-3xl font-black shadow-xl shadow-blue-900/20">
+                                        {(viewType === "enquiry" ? selectedItem.student_name : selectedItem.full_name)[0].toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <h3 className="text-3xl font-black text-slate-800 tracking-tight">
+                                            {viewType === "enquiry" ? selectedItem.student_name : selectedItem.full_name}
+                                        </h3>
+                                        <div className="flex items-center gap-3 mt-1">
+                                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.15em] ${viewType === 'enquiry' ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-green-600'}`}>
+                                                {viewType === "enquiry" ? "Enquiry Record" : "Admission Record"}
+                                            </span>
+                                            <span className="text-slate-300">|</span>
+                                            <span className="text-slate-400 font-bold text-xs tracking-widest uppercase font-mono">ID: #{selectedItem.enquiry_id}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-12">
+                                    {/* Personal & Identification */}
+                                    <section>
+                                        <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-6 group">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span> 1. Personal Information
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                            <DetailBox label="Full Name" value={viewType === "enquiry" ? selectedItem.student_name : selectedItem.full_name} icon={User} />
+                                            <DetailBox label="Gender" value={selectedItem.gender} icon={User} />
+                                            <DetailBox label="Date of Birth" value={selectedItem.dob ? new Date(selectedItem.dob).toLocaleDateString() : "N/A"} icon={Calendar} />
+                                            <DetailBox label="Age" value={selectedItem.age} icon={Calendar} />
+                                            {viewType === "admission" && (
+                                                <>
+                                                    <DetailBox label="Aadhaar Number" value={selectedItem.aadhaar_number} icon={FileText} />
+                                                    <DetailBox label="Passport No." value={selectedItem.passport_number || "None"} icon={BookOpen} />
+                                                </>
+                                            )}
+                                        </div>
+                                    </section>
+
+                                    {/* Contact & Location */}
+                                    <section>
+                                        <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-6 group">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span> 2. Contact Details
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                            <DetailBox label="Mobile Number" value={selectedItem.mobile_number} icon={User} />
+                                            <DetailBox label="WhatsApp No." value={selectedItem.whatsapp_number} icon={User} />
+                                            <DetailBox label="Email Address" value={selectedItem.email_id} icon={AlertCircle} />
+                                            <div className="md:col-span-2 lg:col-span-3">
+                                                 <DetailBox label="Residential Address" value={`${selectedItem.residential_address || selectedItem.perm_address || ""}, ${selectedItem.city || selectedItem.perm_city || ""}, ${selectedItem.state || selectedItem.perm_state || ""} - ${selectedItem.pin_code || selectedItem.perm_pin || ""}`} icon={FileText} />
+                                            </div>
+                                        </div>
+                                    </section>
+
+                                    {/* Guardian & Background */}
+                                    <section>
+                                        <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-6 group">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span> 3. Guardian & Background
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                            <DetailBox label="Guardian Name" value={selectedItem.parent_name || selectedItem.father_name} icon={User} />
+                                            <DetailBox label="Guardian Mobile" value={selectedItem.parent_mobile || selectedItem.parent_contact} icon={User} />
+                                            <DetailBox label="Occupation" value={selectedItem.occupation || selectedItem.parent_occupation} icon={Briefcase} />
+                                            <DetailBox label="Highest Qual." value={selectedItem.highest_qualification} icon={GraduationCap} />
+                                            <DetailBox label="Institution" value={selectedItem.institution_name} icon={GraduationCap} />
+                                            <DetailBox label="Year of Passing" value={selectedItem.year_of_passing} icon={Calendar} />
+                                        </div>
+                                    </section>
+
+                                    {/* Training & Fees */}
+                                    <section className="p-8 bg-slate-50 rounded-[2rem] border border-slate-100 shadow-inner">
+                                        <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-6 group">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600"></span> 4. Course & Financials
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                            <DetailBox label="Selected Course" value={selectedItem.course_interested || selectedItem.course_name} icon={BookOpen} />
+                                            <DetailBox label="Training Mode" value={selectedItem.mode_of_training || selectedItem.training_mode} icon={RefreshCw} />
+                                            <DetailBox label="Counsellor" value={selectedItem.counsellor_name} icon={CheckCircle2} />
+                                            
+                                            {viewType === "admission" && (
+                                                <>
+                                                    <div className="p-4 bg-white rounded-2xl shadow-sm border border-slate-100">
+                                                        <DetailBox label="Total Course Fee" value={`₹ ${parseFloat(selectedItem.total_fees || 0).toLocaleString()}`} icon={RefreshCw} />
+                                                    </div>
+                                                    <div className="p-4 bg-green-50 rounded-2xl shadow-sm border border-green-100">
+                                                        <DetailBox label="Fees Paid" value={`₹ ${parseFloat(selectedItem.paid_fees || 0).toLocaleString()}`} icon={CheckCircle2} />
+                                                    </div>
+                                                    <div className="p-4 bg-red-50 rounded-2xl shadow-sm border border-red-100">
+                                                        <DetailBox label="Balance Amount" value={`₹ ${parseFloat(selectedItem.balance_amount || 0).toLocaleString()}`} icon={AlertCircle} />
+                                                    </div>
+                                                </>
+                                            )}
+                                            {viewType === "enquiry" && (
+                                                <DetailBox label="Interest Level" value={selectedItem.interest_level} icon={AlertCircle} />
+                                            )}
+                                        </div>
+                                    </section>
+
+                                    {selectedItem.remarks && (
+                                        <section>
+                                            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 mb-3 ml-1">Internal Remarks</h4>
+                                            <div className="p-6 bg-amber-50 rounded-2xl border border-amber-100 text-sm font-medium text-amber-900 italic">
+                                                "{selectedItem.remarks}"
+                                            </div>
+                                        </section>
+                                    )}
+                                </div>
+
+                                <div className="mt-12 flex justify-center">
+                                    <button 
+                                        onClick={() => { setSelectedItem(null); setViewType(null); }}
+                                        className="w-full py-4 bg-[#0b1f3a] text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-600 transition-all shadow-lg"
+                                    >
+                                        Close Quick View
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
+
+const DetailBox = ({ label, value, icon: Icon }: any) => (
+    <div className="space-y-1.5">
+        <div className="flex items-center gap-2 text-slate-400">
+            <Icon size={14} />
+            <p className="text-[10px] font-black uppercase tracking-widest">{label}</p>
+        </div>
+        <p className="text-xs font-bold text-slate-700">{value || "---"}</p>
+    </div>
+);
 
 const DashboardStat = ({ label, value, icon: Icon, color, bg }: any) => (
     <div className="bg-white p-6 rounded-[2rem] shadow-lg border border-slate-100 hover:shadow-xl transition-all group">
