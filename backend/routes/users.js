@@ -34,24 +34,94 @@ const generatePassword = require("../utils/passwordGenerator");
 
 const router = express.Router();
 
-// GET all users
+// GET all users (with optional role filtering)
 router.get(
   "/",
   authMiddleware,
   checkPermission("Manage Users", "view"),
   async (req, res) => {
     try {
-      const result = await pool.query(
-        `SELECT u.id, u.name, u.email, u.status, u.created_at,
+      const { role } = req.query; // role name (e.g. STUDENT, Associate, Admin)
+      let query = `
+        SELECT u.id, u.name, u.email, u.status, u.created_at,
                 r.name as role_name, r.id as role_id
          FROM users u
          LEFT JOIN roles r ON u.role_id = r.id
-         ORDER BY u.created_at DESC`
-      );
-      res.json(result.rows);
+      `;
+      let params = [];
+
+      if (role) {
+        query += ` WHERE LOWER(r.name) = LOWER($1)`;
+        params.push(role);
+      }
+
+      query += ` ORDER BY u.created_at DESC`;
+
+      const result = await pool.query(query, params);
+      res.json({ data: result.rows, total: result.rowCount });
     } catch (err) {
       console.error("Get users error:", err);
       res.status(500).json({ message: "Server error" });
+    }
+  }
+);
+
+// POST create user from admission
+router.post(
+  "/from-admission",
+  authMiddleware,
+  checkPermission("Manage Users", "add"),
+  async (req, res) => {
+    try {
+      const { admission_id } = req.body;
+
+      // 1. Fetch admission details
+      const admRes = await pool.query(
+        "SELECT full_name, email_id FROM student_admissions WHERE id = $1",
+        [admission_id]
+      );
+      if (admRes.rows.length === 0)
+        return res.status(404).json({ message: "Admission record not found." });
+
+      const admission = admRes.rows[0];
+      const email = admission.email_id;
+      const name = admission.full_name;
+
+      // 2. Fetch Student role id
+      const roleRes = await pool.query("SELECT id FROM roles WHERE LOWER(name) = 'student'");
+      const roleId = roleRes.rows[0]?.id;
+      if (!roleId)
+        return res.status(500).json({ message: "Student role not found in database." });
+
+      // 3. Generate one-time password
+      const plainPassword = generatePassword();
+      const hashed = await bcrypt.hash(plainPassword, 10);
+
+      // 4. Upsert User (email is unique)
+      const result = await pool.query(
+        `INSERT INTO users (name, email, password, role_id, status)
+         VALUES ($1, $2, $3, $4, 'Active')
+         ON CONFLICT (email)
+         DO UPDATE SET
+           password = EXCLUDED.password,
+           role_id  = EXCLUDED.role_id,
+           name     = EXCLUDED.name,
+           status   = 'Active'
+         RETURNING id, name, email, status`,
+        [name, email, hashed, roleId]
+      );
+
+      res.status(200).json({
+        message: "Student credentials generated successfully.",
+        user: result.rows[0],
+        credentials: {
+          username: email,
+          password: plainPassword
+        }
+      });
+    } catch (err) {
+      console.error("Credential generation error:", err);
+      res.status(500).json({ message: "Server error", details: err.message });
     }
   }
 );

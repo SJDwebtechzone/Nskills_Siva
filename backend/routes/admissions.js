@@ -256,6 +256,28 @@ router.get("/by-enquiry/:enquiry_id", authMiddleware, async (req, res) => {
     }
 });
 
+// Get admissions that do not have user credentials yet
+router.get("/no-credential", authMiddleware, async (req, res) => {
+    try {
+        // Only Admin/Super Admin
+        if (req.user.roleName !== "Admin" && req.user.roleName !== "Super Admin") {
+            return res.status(403).json({ error: "Access denied." });
+        }
+        
+        // Find admissions whose email_id is NOT in the users table
+        const result = await pool.query(`
+            SELECT id, full_name, email_id, mobile_number, course_interested 
+            FROM student_admissions 
+            WHERE email_id NOT IN (SELECT email FROM users)
+            ORDER BY created_at DESC
+        `);
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Error fetching admissions without credentials:", err);
+        res.status(500).json({ error: "Server Error" });
+    }
+});
+
 // ─── DYNAMIC /:id ROUTES LAST ─────────────────────────────────────────────────
 
 // Update admission (PATCH /:id)

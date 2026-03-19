@@ -29,7 +29,11 @@ const StudentLogin = () => {
                 password
             });
 
-            localStorage.setItem("token", res.data.token);
+            // ✅ Save token + user + permissions (consistent with Admin login)
+            localStorage.setItem("token",       res.data.token);
+            localStorage.setItem("user",        JSON.stringify(res.data.user));
+            localStorage.setItem("permissions", JSON.stringify(res.data.permissions));
+
             router.push("/dashboard");
         } catch (err: any) {
             console.error(err);
