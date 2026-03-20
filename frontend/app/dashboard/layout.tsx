@@ -77,31 +77,32 @@ const websiteSettingsItems = [
   { name: "Feature Popup",  path: "/dashboard/settings?tab=popup",         module: "Feature Popup",  icon: Layers,    tab: "popup"           },
   { name: "Latest News",     path: "/dashboard/settings?tab=news",          module: "Latest News",     icon: Settings,  tab: "news"            },
   { name: "Accreditions",  path: "/dashboard/settings?tab=accreditations",module: "Accreditions",  icon: Award,     tab: "accreditations"  },
-  { name: "Contact Info",    path: "/dashboard/settings/contact-info",      module: "Home",            icon: Phone,     tab: null              },
+  { name: "Contact Info",    path: "/dashboard/settings/contact-info",      module: "Contact Info",            icon: Phone,     tab: null              },
 ];
 
 const associateManagementItems = [
-  { name: "Dashboard",             path: "/dashboard/associate-management/dashboard", module: "Associate Management", icon: DashboardIcon },
-  { name: "Enquiry Form",          path: "/dashboard/associate-management/enquiry",   module: "Associate Management", icon: ClipboardList },
-  { name: "Admission Form",        path: "/dashboard/associate-management/admission",  module: "Associate Management", icon: UserCheck      },
-  { name: "Referral Fee Tracking", path: "/dashboard/associate-management/referral-tracking", module: "Associate Management", icon: DollarSign },
-  { name: "Referral Fee History",  path: "/dashboard/ntsc-management/referral-payment", module: "Associate Management", icon: Wallet },
+  { name: "Dashboard",             path: "/dashboard/associate-management/dashboard", module: "Associate Dashboard", icon: DashboardIcon },
+  { name: "Enquiry Form",          path: "/dashboard/associate-management/enquiry",   module: "Enquiry Form", icon: ClipboardList },
+  { name: "Admission Form",        path: "/dashboard/associate-management/admission",  module: "Admission Form", icon: UserCheck      },
+  { name: "Referral Fee Tracking", path: "/dashboard/associate-management/referral-tracking", module: "Referral Fee Tracking", icon: DollarSign },
+  { name: "Referral Fee History",  path: "/dashboard/ntsc-management/referral-payment", module: "Referral Fee History", icon: Wallet },
 ];
 
 const studentManagementItems = [
-  { name: "Dashboard",                path: "/dashboard/student-management/dashboard",    icon: DashboardIcon },
-  { name: "ID Generation",            path: "/dashboard/student-management/id-generation", icon: FileDigit },
-  { name: "Course and Fees Details",  path: "/dashboard/student-management/course-details", icon: BookOpen },
-  { name: "Fees Receipt",             path: "/dashboard/student-management/fees-receipt",   icon: Receipt },
-  { name: "Pre-Test",                 path: "/dashboard/student-management/pre-test",       icon: ClipboardList },
-  { name: "Daily Attendance",         path: "/dashboard/student-management/attendance",     icon: CalendarCheck },
-  { name: "Online Test",              path: "/dashboard/student-management/online-test",    icon: MonitorPlay },
-  { name: "Assessment and Assignment",path: "/dashboard/student-management/assessments",     icon: PenTool },
-  { name: "Practical Video",          path: "/dashboard/student-management/practical-video", icon: Video },
-  { name: "Final Exam",               path: "/dashboard/student-management/final-exam",      icon: GraduationCap },
-  { name: "Mark and Result",          path: "/dashboard/student-management/results",         icon: CheckSquare },
+  { name: "Dashboard",                path: "/dashboard/student-management/dashboard",    module: "StudentDashboard", icon: DashboardIcon },
+  { name: "ID Generation",            path: "/dashboard/student-management/id-generation", module: "ID Generation", icon: FileDigit },
+  { name: "Course and Fees Details",  path: "/dashboard/student-management/course-details", module: "Course and Fees Details", icon: BookOpen },
+  { name: "Fees Receipt",             path: "/dashboard/student-management/fees-receipt",   module: "Fees Receipt", icon: Receipt },
+  { name: "Pre-Test",                 path: "/dashboard/student-management/pre-test",       module: "Pre-Test", icon: ClipboardList },
+  { name: "Daily Attendance",         path: "/dashboard/student-management/attendance",     module: "Daily Attendance", icon: CalendarCheck },
+  { name: "Online Test",              path: "/dashboard/student-management/online-test",    module: "Online Test", icon: MonitorPlay },
+  { name: "Assessment and Assignment",path: "/dashboard/student-management/assessments",     module: "Assessment and Assignment", icon: PenTool },
+  { name: "Practical Video",          path: "/dashboard/student-management/practical-video", module: "Practical Video", icon: Video },
+  { name: "Final Exam",               path: "/dashboard/student-management/final-exam",      module: "Final Exam", icon: GraduationCap },
+  { name: "Mark and Result",          path: "/dashboard/student-management/results",         module: "Mark and Result", icon: CheckSquare },
   {
     name: "Certification",
+    module: "Certification",
     icon: Award,
     isDropdown: true,
     children: [
@@ -109,11 +110,12 @@ const studentManagementItems = [
       { name: "Request Certificate",  path: "/dashboard/student-management/certificates/request",  icon: Send },
     ]
   },
-  { name: "Placement Details Uploads", path: "/dashboard/student-management/placements",         icon: Upload },
-  { name: "Feedback & Testimonial",    path: "/dashboard/student-management/feedback",           icon: MessageSquare },
-  { name: "Google Review & Videos",    path: "/dashboard/student-management/reviews",            icon: Share2 },
+  { name: "Placement Details Uploads", path: "/dashboard/student-management/placements",         module: "Placement Details Uploads", icon: Upload },
+  { name: "Feedback & Testimonial",    path: "/dashboard/student-management/feedback",           module: "Feedback & Testimonial", icon: MessageSquare },
+  { name: "Google Review & Videos",    path: "/dashboard/student-management/reviews",            module: "Google Review & Videos", icon: Share2 },
   {
     name: "Fee Details",
+    module: "Fee Details",
     icon: DollarSign,
     isDropdown: true,
     children: [
@@ -122,10 +124,12 @@ const studentManagementItems = [
     ]
   }
 ];
+
 const traineeManagementItems = [
-  { name: "Dashboard", path: "/dashboard/trainee-management/dashboard", icon: DashboardIcon },
+  { name: "Dashboard", path: "/dashboard/trainee-management/dashboard", module: "TraineeDashboard", icon: DashboardIcon },
   {
     name: "Class Status",
+    module: "Class Status",
     icon: ClipboardList,
     isDropdown: true,
     children: [
@@ -134,25 +138,26 @@ const traineeManagementItems = [
       { name: "Discontinue",path: "/dashboard/trainee-management/class-status/discontinue",icon: StopCircle },
     ]
   },
-  { name: "Attendance Status",        path: "/dashboard/trainee-management/attendance",     icon: CalendarCheck },
-  { name: "Pre-Test",                 path: "/dashboard/trainee-management/pre-test",       icon: FileText },
-  { name: "Online Test",              path: "/dashboard/trainee-management/online-test",    icon: MonitorPlay },
-  { name: "Assessment and Assignment",path: "/dashboard/trainee-management/assessments",     icon: PenTool },
-  { name: "Practical Video",          path: "/dashboard/trainee-management/practical-video", icon: Video },
-  { name: "Final Exam",               path: "/dashboard/trainee-management/final-exam",      icon: GraduationCap },
-  { name: "Mark and Result",          path: "/dashboard/trainee-management/results",         icon: CheckSquare },
+  { name: "Attendance Status",        path: "/dashboard/trainee-management/attendance",     module: "Attendance Status", icon: CalendarCheck },
+  { name: "Trainee Management",       path: "/dashboard/trainee-management/dashboard",      module: "Trainee Management", icon: Briefcase },
+  { name: "Pre-Test",                 path: "/dashboard/trainee-management/pre-test",       module: "Pre-Test", icon: FileText },
+  { name: "Online Test",              path: "/dashboard/trainee-management/online-test",    module: "Online Test", icon: MonitorPlay },
+  { name: "Assessment and Assignment",path: "/dashboard/trainee-management/assessments",     module: "Assessment and Assignment", icon: PenTool },
+  { name: "Practical Video",          path: "/dashboard/trainee-management/practical-video", module: "Practical Video", icon: Video },
+  { name: "Final Exam",               path: "/dashboard/trainee-management/final-exam",      module: "Final Exam", icon: GraduationCap },
+  { name: "Mark and Result",          path: "/dashboard/trainee-management/results",         module: "Mark and Result", icon: CheckSquare },
 ];
 
 const ntscManagementItems = [
-  { name: "Dashboard", path: "/dashboard/ntsc-management/dashboard", icon: DashboardIcon },
-  { name: "Download A4 Sheet", path: "/dashboard/ntsc-management/download-a4", icon: Printer },
-  { name: "Enquiry / Admission and Document", path: "/dashboard/ntsc-management/enquiry-admission", icon: FileText },
-  { name: "Update Class Status", path: "/dashboard/ntsc-management/class-status", icon: RefreshCw },
-  { name: "Monitor Student Changes and Approval", path: "/dashboard/ntsc-management/monitor-approvals", icon: Eye },
+  { name: "Dashboard", path: "/dashboard/ntsc-management/dashboard", module: "NTSC Dashboard", icon: DashboardIcon },
+  { name: "Download A4 Sheet", path: "/dashboard/ntsc-management/download-a4", module: "Download A4 Sheet", icon: Printer },
+  { name: "Enquiry / Admission and Document", path: "/dashboard/ntsc-management/enquiry-admission", module: "Enquiry / Admission and Document", icon: FileText },
+  { name: "Update Class Status", path: "/dashboard/ntsc-management/class-status", module: "Update Class Status", icon: RefreshCw },
+  { name: "Monitor Student Changes and Approval", path: "/dashboard/ntsc-management/monitor-approvals", module: "Monitor Student Changes and Approval", icon: Eye },
 ];
 
 const backgroundImagesItems = [
-  { name: "Background Images", path: "/dashboard/background-images", icon: Image },
+  { name: "Background Images", path: "/dashboard/background-images", module: "Background Images", icon: Image },
 ];
 
 function DashboardLayoutContent({ children }: DashboardLayoutProps) {
@@ -218,23 +223,26 @@ function DashboardLayoutContent({ children }: DashboardLayoutProps) {
   }, [user, loading, router]);
 
   // ✅ Filter menus by permission
-  const showDashboard           = permissions?.["Dashboard"]?.view;
-  const showPayments            = permissions?.["Payments"]?.view;
-  const visibleUserItems        = userManagementItems.filter((i) => permissions?.[i.module]?.view);
-  const visibleSettingsItems    = websiteSettingsItems.filter(
-    (i) => permissions?.[i.module]?.view || showDashboard
-  );
-  // Student Management: show if specific permission exists OR if user has Dashboard access (admin)
-  const visibleAssociateItems   = associateManagementItems.filter(
-    (i) => {
-      // Referral Fee History is ONLY for Admins/Super Admins
-      if (i.name === "Referral Fee History") {
-        return user?.role === "Admin" || user?.role === "Super Admin";
-      }
+  const showDashboard           = permissions?.["Dashboard"]?.view || user?.role === "Super Admin" || user?.role === "Admin";
+  const showPayments            = permissions?.["Payments"]?.view || user?.role === "Super Admin" || user?.role === "Admin";
+  // Override for Super Admin/Admin to ensure they never get locked out during setup
+  const hasPerm = (modName: string) => user?.role === "Super Admin" || user?.role === "Admin" || permissions?.[modName]?.view;
 
-      return permissions?.[i.module!]?.view || showDashboard;
-    }
-  );
+  const visibleUserItems        = userManagementItems.filter(i => hasPerm(i.module));
+  const visibleSettingsItems    = websiteSettingsItems.filter(i => hasPerm(i.module));
+  const visibleAssociateItems   = associateManagementItems.filter(i => hasPerm(i.module));
+  const visibleStudentItems     = studentManagementItems.filter(i => hasPerm(i.module));
+  const visibleTraineeItems     = traineeManagementItems.filter(i => hasPerm(i.module));
+  const visibleNTSCItems        = ntscManagementItems.filter(i => hasPerm(i.module));
+  const visibleBgItems          = backgroundImagesItems.filter(i => hasPerm(i.module));
+
+  const showUserManagement    = visibleUserItems.length > 0;
+  const showSettingsManagement= visibleSettingsItems.length > 0;
+  const showAssociateManagement= visibleAssociateItems.length > 0;
+  const showStudentManagement = visibleStudentItems.length > 0;
+  const showTraineeManagement = visibleTraineeItems.length > 0;
+  const showNTSCManagement    = visibleNTSCItems.length > 0;
+  const showBackgroundImages  = visibleBgItems.length > 0;
 
   // ✅ Initials generator
   const getInitials = (name: string) =>
@@ -341,7 +349,7 @@ function DashboardLayoutContent({ children }: DashboardLayoutProps) {
               {isUserMenuOpen && (
                 <ul className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-4 py-1">
                   {visibleUserItems.map((item) => (
-                    <li key={item.path}>
+                    <li key={item.name}>
                       <Link
                         href={item.path}
                         className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all duration-300 ${
@@ -385,7 +393,7 @@ function DashboardLayoutContent({ children }: DashboardLayoutProps) {
               {isSettingsMenuOpen && (
                 <ul className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-4 py-1">
                   {visibleSettingsItems.map((item) => (
-                    <li key={item.path}>
+                    <li key={item.name}>
                       <Link
                         href={item.path}
                         className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all duration-300 ${
@@ -425,7 +433,7 @@ function DashboardLayoutContent({ children }: DashboardLayoutProps) {
               {isAssociateMenuOpen && (
                 <ul className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-4 py-1">
                   {visibleAssociateItems.map((item) => (
-                    <li key={item.path}>
+                    <li key={item.name}>
                       <Link
                         href={item.path}
                         className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all duration-300 ${
@@ -445,237 +453,245 @@ function DashboardLayoutContent({ children }: DashboardLayoutProps) {
           )}
 
           {/* ✅ Student Management */}
-          <div className="space-y-1 mt-1">
-            <button
-              onClick={() => setIsStudentManagementOpen(!isStudentManagementOpen)}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 group ${
-                isStudentManagementOpen
-                  ? "text-white bg-white/5"
-                  : "text-gray-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <GraduationCap className={`w-5 h-5 ${isStudentManagementOpen ? "text-blue-400" : "group-hover:text-blue-400"}`} />
-                <span className="font-medium">Student Management</span>
-              </div>
-              {isStudentManagementOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            </button>
+          {showStudentManagement && (
+            <div className="space-y-1 mt-1">
+              <button
+                onClick={() => setIsStudentManagementOpen(!isStudentManagementOpen)}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 group ${
+                  isStudentManagementOpen
+                    ? "text-white bg-white/5"
+                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <GraduationCap className={`w-5 h-5 ${isStudentManagementOpen ? "text-blue-400" : "group-hover:text-blue-400"}`} />
+                  <span className="font-medium">Student Management</span>
+                </div>
+                {isStudentManagementOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
 
-            {isStudentManagementOpen && (
-              <ul className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-4 py-1">
-                {studentManagementItems.map((item) => {
-                  if (item.isDropdown) {
-                    const isOpen = item.name === "Certification" ? isCertificationOpen : isFeeDetailsOpen;
-                    const setIsOpen = item.name === "Certification" ? setIsCertificationOpen : setIsFeeDetailsOpen;
-                    
+              {isStudentManagementOpen && (
+                <ul className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-4 py-1">
+                  {visibleStudentItems.map((item) => {
+                    if (item.isDropdown) {
+                      const isOpen = item.name === "Certification" ? isCertificationOpen : isFeeDetailsOpen;
+                      const setIsOpen = item.name === "Certification" ? setIsCertificationOpen : setIsFeeDetailsOpen;
+                      
+                      return (
+                        <li key={item.name}>
+                          <button
+                            onClick={() => setIsOpen(!isOpen)}
+                            className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm transition-all duration-300 ${
+                              isOpen ? "text-white bg-white/5" : "text-gray-500 hover:text-white hover:bg-white/5"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <item.icon className="w-4 h-4" />
+                              <span>{item.name}</span>
+                            </div>
+                            {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                          </button>
+                          {isOpen && (
+                            <ul className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-4 py-1">
+                              {item.children.map((subItem) => (
+                                <li key={subItem.name}>
+                                  <Link
+                                    href={subItem.path!}
+                                    className={`flex items-center gap-3 px-4 py-2 rounded-lg text-xs transition-all duration-300 ${
+                                      pathname === subItem.path
+                                        ? "text-blue-400 font-bold bg-blue-400/10"
+                                        : "text-gray-500 hover:text-white hover:bg-white/5"
+                                    }`}
+                                  >
+                                    <subItem.icon className="w-3.5 h-3.5" />
+                                    <span>{subItem.name}</span>
+                                  </Link>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </li>
+                      );
+                    }
                     return (
                       <li key={item.name}>
-                        <button
-                          onClick={() => setIsOpen(!isOpen)}
-                          className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm transition-all duration-300 ${
-                            isOpen ? "text-white bg-white/5" : "text-gray-500 hover:text-white hover:bg-white/5"
+                        <Link
+                          href={item.path!}
+                          className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all duration-300 ${
+                            pathname === item.path
+                              ? "text-blue-400 font-bold bg-blue-400/10"
+                              : "text-gray-500 hover:text-white hover:bg-white/5"
                           }`}
                         >
-                          <div className="flex items-center gap-3">
-                            <item.icon className="w-4 h-4" />
-                            <span>{item.name}</span>
-                          </div>
-                          {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                        </button>
-                        {isOpen && (
-                          <ul className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-4 py-1">
-                            {item.children.map((subItem) => (
-                              <li key={subItem.path}>
-                                <Link
-                                  href={subItem.path!}
-                                  className={`flex items-center gap-3 px-4 py-2 rounded-lg text-xs transition-all duration-300 ${
-                                    pathname === subItem.path
-                                      ? "text-blue-400 font-bold bg-blue-400/10"
-                                      : "text-gray-500 hover:text-white hover:bg-white/5"
-                                  }`}
-                                >
-                                  <subItem.icon className="w-3.5 h-3.5" />
-                                  <span>{subItem.name}</span>
-                                </Link>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
+                          <item.icon className="w-4 h-4" />
+                          <span>{item.name}</span>
+                        </Link>
                       </li>
                     );
-                  }
-                  return (
-                    <li key={item.path}>
-                      <Link
-                        href={item.path!}
-                        className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all duration-300 ${
-                          pathname === item.path
-                            ? "text-blue-400 font-bold bg-blue-400/10"
-                            : "text-gray-500 hover:text-white hover:bg-white/5"
-                        }`}
-                      >
-                        <item.icon className="w-4 h-4" />
-                        <span>{item.name}</span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
+                  })}
+                </ul>
+              )}
+            </div>
+          )}
 
-          {/* ✅ Trainee Management (No sub-items yet) */}
-          <div className="space-y-1 mt-1">
-            <button
-              onClick={() => setIsTraineeManagementOpen(!isTraineeManagementOpen)}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 group ${
-                isTraineeManagementOpen
-                  ? "text-white bg-white/5"
-                  : "text-gray-400 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Briefcase className={`w-5 h-5 ${isTraineeManagementOpen ? "text-blue-400" : "group-hover:text-blue-400"}`} />
-                <span className="font-medium">Trainee Management</span>
-              </div>
-              {isTraineeManagementOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            </button>
-            {isTraineeManagementOpen && (
-              <ul className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-4 py-1">
-                {traineeManagementItems.map((item) => {
-                  if (item.isDropdown) {
-                    const isOpen = isClassStatusOpen;
-                    const setIsOpen = setIsClassStatusOpen;
-                    
+          {/* ✅ Trainee Management */}
+          {showTraineeManagement && (
+            <div className="space-y-1 mt-1">
+              <button
+                onClick={() => setIsTraineeManagementOpen(!isTraineeManagementOpen)}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 group ${
+                  isTraineeManagementOpen
+                    ? "text-white bg-white/5"
+                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <Briefcase className={`w-5 h-5 ${isTraineeManagementOpen ? "text-blue-400" : "group-hover:text-blue-400"}`} />
+                  <span className="font-medium">Trainee Management</span>
+                </div>
+                {isTraineeManagementOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+              {isTraineeManagementOpen && (
+                <ul className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-4 py-1">
+                  {visibleTraineeItems.map((item) => {
+                    if (item.isDropdown) {
+                      const isOpen = isClassStatusOpen;
+                      const setIsOpen = setIsClassStatusOpen;
+                      
+                      return (
+                        <li key={item.name}>
+                          <button
+                            onClick={() => setIsOpen(!isOpen)}
+                            className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm transition-all duration-300 ${
+                              isOpen ? "text-white bg-white/5" : "text-gray-500 hover:text-white hover:bg-white/5"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <item.icon className="w-4 h-4" />
+                              <span>{item.name}</span>
+                            </div>
+                            {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                          </button>
+                          {isOpen && (
+                            <ul className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-4 py-1">
+                              {item.children.map((subItem) => (
+                                <li key={subItem.name}>
+                                  <Link
+                                    href={subItem.path!}
+                                    className={`flex items-center gap-3 px-4 py-2 rounded-lg text-xs transition-all duration-300 ${
+                                      pathname === subItem.path
+                                        ? "text-blue-400 font-bold bg-blue-400/10"
+                                        : "text-gray-500 hover:text-white hover:bg-white/5"
+                                    }`}
+                                  >
+                                    <subItem.icon className="w-3.5 h-3.5" />
+                                    <span>{subItem.name}</span>
+                                  </Link>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </li>
+                      );
+                    }
                     return (
                       <li key={item.name}>
-                        <button
-                          onClick={() => setIsOpen(!isOpen)}
-                          className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm transition-all duration-300 ${
-                            isOpen ? "text-white bg-white/5" : "text-gray-500 hover:text-white hover:bg-white/5"
+                        <Link
+                          href={item.path!}
+                          className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all duration-300 ${
+                            pathname === item.path
+                              ? "text-blue-400 font-bold bg-blue-400/10"
+                              : "text-gray-500 hover:text-white hover:bg-white/5"
                           }`}
                         >
-                          <div className="flex items-center gap-3">
-                            <item.icon className="w-4 h-4" />
-                            <span>{item.name}</span>
-                          </div>
-                          {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                        </button>
-                        {isOpen && (
-                          <ul className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-4 py-1">
-                            {item.children.map((subItem) => (
-                              <li key={subItem.path}>
-                                <Link
-                                  href={subItem.path!}
-                                  className={`flex items-center gap-3 px-4 py-2 rounded-lg text-xs transition-all duration-300 ${
-                                    pathname === subItem.path
-                                      ? "text-blue-400 font-bold bg-blue-400/10"
-                                      : "text-gray-500 hover:text-white hover:bg-white/5"
-                                  }`}
-                                >
-                                  <subItem.icon className="w-3.5 h-3.5" />
-                                  <span>{subItem.name}</span>
-                                </Link>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
+                          <item.icon className="w-4 h-4" />
+                          <span>{item.name}</span>
+                        </Link>
                       </li>
                     );
-                  }
-                  return (
-                    <li key={item.path}>
-                      <Link
-                        href={item.path!}
-                        className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all duration-300 ${
-                          pathname === item.path
-                            ? "text-blue-400 font-bold bg-blue-400/10"
-                            : "text-gray-500 hover:text-white hover:bg-white/5"
-                        }`}
-                      >
-                        <item.icon className="w-4 h-4" />
-                        <span>{item.name}</span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
+                  })}
+                </ul>
+              )}
+            </div>
+          )}
 
             {/* ✅ NTSC Management */}
-            <div className="space-y-1 mt-1">
-              <button
-                onClick={() => setIsNTSCManagementOpen(!isNTSCManagementOpen)}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 group ${
-                  isNTSCManagementOpen
-                    ? "text-white bg-white/5"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <ShieldCheck className={`w-5 h-5 ${isNTSCManagementOpen ? "text-blue-400" : "group-hover:text-blue-400"}`} />
-                  <span className="font-medium">NTSC Management</span>
-                </div>
-                {isNTSCManagementOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isNTSCManagementOpen && (
-                <ul className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-4 py-1">
-                  {ntscManagementItems.map((item) => (
-                    <li key={item.path}>
-                      <Link
-                        href={item.path!}
-                        className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all duration-300 ${
-                          pathname === item.path
-                            ? "text-blue-400 font-bold bg-blue-400/10"
-                            : "text-gray-500 hover:text-white hover:bg-white/5"
-                        }`}
-                      >
-                        <item.icon className="w-4 h-4" />
-                        <span>{item.name}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            {showNTSCManagement && (
+              <div className="space-y-1 mt-1">
+                <button
+                  onClick={() => setIsNTSCManagementOpen(!isNTSCManagementOpen)}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 group ${
+                    isNTSCManagementOpen
+                      ? "text-white bg-white/5"
+                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <ShieldCheck className={`w-5 h-5 ${isNTSCManagementOpen ? "text-blue-400" : "group-hover:text-blue-400"}`} />
+                    <span className="font-medium">NTSC Management</span>
+                  </div>
+                  {isNTSCManagementOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                </button>
+                {isNTSCManagementOpen && (
+                  <ul className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-4 py-1">
+                    {visibleNTSCItems.map((item) => (
+                      <li key={item.name}>
+                        <Link
+                          href={item.path!}
+                          className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all duration-300 ${
+                            pathname === item.path
+                              ? "text-blue-400 font-bold bg-blue-400/10"
+                              : "text-gray-500 hover:text-white hover:bg-white/5"
+                          }`}
+                        >
+                          <item.icon className="w-4 h-4" />
+                          <span>{item.name}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
 
             {/* ✅ Background Images */}
-            <div className="space-y-1 mt-1">
-              <button
-                onClick={() => setIsBackgroundImagesOpen(!isBackgroundImagesOpen)}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 group ${
-                  isBackgroundImagesOpen
-                    ? "text-white bg-white/5"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <Image className={`w-5 h-5 ${isBackgroundImagesOpen ? "text-blue-400" : "group-hover:text-blue-400"}`} />
-                  <span className="font-medium text-left">Background Images</span>
-                </div>
-                {isBackgroundImagesOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-              </button>
-              {isBackgroundImagesOpen && (
-                <ul className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-4 py-1">
-                  {backgroundImagesItems.map((item) => (
-                    <li key={item.path}>
-                      <Link
-                        href={item.path!}
-                        className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all duration-300 ${
-                          pathname === item.path
-                            ? "text-blue-400 font-bold bg-blue-400/10"
-                            : "text-gray-500 hover:text-white hover:bg-white/5"
-                        }`}
-                      >
-                        <item.icon className="w-4 h-4" />
-                        <span>{item.name}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            {showBackgroundImages && (
+              <div className="space-y-1 mt-1">
+                <button
+                  onClick={() => setIsBackgroundImagesOpen(!isBackgroundImagesOpen)}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 group ${
+                    isBackgroundImagesOpen
+                      ? "text-white bg-white/5"
+                      : "text-gray-400 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Image className={`w-5 h-5 ${isBackgroundImagesOpen ? "text-blue-400" : "group-hover:text-blue-400"}`} />
+                    <span className="font-medium text-left">Background Images</span>
+                  </div>
+                  {isBackgroundImagesOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                </button>
+                {isBackgroundImagesOpen && (
+                  <ul className="mt-1 ml-4 space-y-1 border-l border-white/10 pl-4 py-1">
+                    {visibleBgItems.map((item) => (
+                      <li key={item.name}>
+                        <Link
+                          href={item.path!}
+                          className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-all duration-300 ${
+                            pathname === item.path
+                              ? "text-blue-400 font-bold bg-blue-400/10"
+                              : "text-gray-500 hover:text-white hover:bg-white/5"
+                          }`}
+                        >
+                          <item.icon className="w-4 h-4" />
+                          <span>{item.name}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
         </nav>
 
         {/* ✅ Logout — calls AuthContext logout() */}

@@ -184,6 +184,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     module: string,
     action: "view" | "add" | "edit" | "delete"
   ): boolean => {
+    if (user?.role === "Super Admin" || user?.role === "Admin") return true;
     return permissions[module]?.[action] === true;
   };
 

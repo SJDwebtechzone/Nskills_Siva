@@ -209,3 +209,17 @@ CREATE TABLE IF NOT EXISTS associate_referral_points (
     is_settled BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- 5. ATTENDANCE MANAGEMENT SYSTEM
+CREATE TABLE IF NOT EXISTS attendance (
+    id SERIAL PRIMARY KEY,
+    admission_id INT REFERENCES student_admissions(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    batch VARCHAR(50) NOT NULL, -- 'Forenoon', 'Afternoon', 'Evening'
+    status VARCHAR(20) NOT NULL, -- 'Present', 'Absent', 'Leave'
+    punch_in TIME,
+    punch_out TIME,
+    remarks TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(admission_id, date, batch)
+);

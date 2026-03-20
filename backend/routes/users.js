@@ -43,7 +43,7 @@ router.get(
     try {
       const { role } = req.query; // role name (e.g. STUDENT, Associate, Admin)
       let query = `
-        SELECT u.id, u.name, u.email, u.status, u.created_at,
+        SELECT u.id, u.name, u.email, u.status, u.created_at, u.phone_number, u.dob,
                 r.name as role_name, r.id as role_id
          FROM users u
          LEFT JOIN roles r ON u.role_id = r.id
@@ -133,7 +133,7 @@ router.post(
   checkPermission("Manage Users", "add"),
   async (req, res) => {
     try {
-      const { name, email, role_id, status } = req.body;
+      const { name, email, role_id, status, phone_number, dob, password } = req.body;
 
       // Check if email already exists
       const existing = await pool.query(
@@ -143,21 +143,21 @@ router.post(
       if (existing.rows.length > 0)
         return res.status(400).json({ message: "Email already exists" });
 
-      // Auto generate password
-      const plainPassword = generatePassword();
+      // Auto generate password hash if not provided (should be provided if staff account)
+      const plainPassword = password || generatePassword();
       const hashed = await bcrypt.hash(plainPassword, 10);
 
       const result = await pool.query(
-        `INSERT INTO users (name, email, password, role_id, status)
-         VALUES ($1, $2, $3, $4, $5)
+        `INSERT INTO users (name, email, password, role_id, status, phone_number, dob)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING id, name, email, status`,
-        [name, email, hashed, role_id, status || "Active"]
+        [name, email, hashed, role_id, status || "Active", phone_number, dob]
       );
 
       res.status(201).json({
         message: "User created successfully",
         user: result.rows[0],
-        plainPassword, // send this to admin so they can share with user
+        plainPassword: password ? "********" : plainPassword, 
       });
     } catch (err) {
       console.error("Create user error:", err);

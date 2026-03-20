@@ -21,6 +21,12 @@ function authMiddleware(req, res, next) {
 function checkPermission(module, action) {
   return async (req, res, next) => {
     try {
+      // ✅ Bypass for Super Admins / Admins
+      if (req.user.roleName === "Admin" || req.user.roleName === "Super Admin") {
+        console.log("[Auth] Bypassing for Admin:", req.user.roleName);
+        return next();
+      }
+
       const result = await pool.query(
         `SELECT can_view, can_add, can_edit, can_delete
          FROM permissions

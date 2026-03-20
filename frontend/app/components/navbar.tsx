@@ -15,6 +15,7 @@ import {
   Mail,
   Clock,
   ChevronDown,
+  Briefcase
 } from "lucide-react";
 import { courses } from "@/data/courses";
 
@@ -133,6 +134,17 @@ const Navbar = () => {
                     <GraduationCap size={16} />
                   </div>
                   <span className="font-semibold text-sm">Student</span>
+                </Link>
+
+                <Link
+                  href="/login/trainee"
+                  className="flex items-center space-x-3 px-4 py-3 hover:bg-blue-50 rounded-md text-gray-700 hover:text-blue-700 transition"
+                  onClick={() => setIsLoginMenuOpen(false)}
+                >
+                  <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
+                    <Briefcase size={16} />
+                  </div>
+                  <span className="font-semibold text-sm">Trainee</span>
                 </Link>
               </div>
             </div>
