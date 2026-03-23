@@ -146,12 +146,25 @@ export default function ReferralTracking() {
                                         <tr key={item.id} className="border-b border-slate-100/50 hover:bg-blue-50/30 transition-all group">
                                             <td className="py-6 px-8">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-12 h-12 bg-white border border-slate-200 shadow-sm rounded-xl flex items-center justify-center text-blue-600 font-bold group-hover:bg-blue-600 group-hover:text-white transition-all">
-                                                        <User size={20} />
+                                                    <div className="w-12 h-12 rounded-xl overflow-hidden border border-slate-200 bg-slate-50 flex-shrink-0">
+                                                        {item.photo_url ? (
+                                                            <img 
+                                                                src={`${process.env.NEXT_PUBLIC_API_URL?.endsWith('/') ? process.env.NEXT_PUBLIC_API_URL : process.env.NEXT_PUBLIC_API_URL + '/'}${item.photo_url}`} 
+                                                                alt="" 
+                                                                className="w-full h-full object-cover"
+                                                                onError={(e) => {
+                                                                    (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.student_name)}&background=0b1f3a&color=fff`;
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-blue-600">
+                                                                <User size={20} />
+                                                            </div>
+                                                        )}
                                                     </div>
                                                     <div>
                                                         <p className="font-black text-slate-800">{item.student_name}</p>
-                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Adm ID: #{item.admission_id}</p>
+                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Adm ID: {item.admission_number || item.enquiry_id || item.admission_id}</p>
                                                     </div>
                                                 </div>
                                             </td>

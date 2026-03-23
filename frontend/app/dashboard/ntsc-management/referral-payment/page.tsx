@@ -198,8 +198,26 @@ export default function AdminReferralPaymentPage() {
                                             </div>
                                         </td>
                                         <td className="py-4 px-6">
-                                            <p className="font-bold text-slate-800 text-sm">{item.student_name}</p>
-                                            <p className="text-[10px] text-slate-400 font-mono">Adm #{item.admission_id}</p>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-200 bg-slate-50 flex-shrink-0">
+                                                    {item.photo_url ? (
+                                                        <img 
+                                                            src={`${process.env.NEXT_PUBLIC_API_URL?.endsWith('/') ? process.env.NEXT_PUBLIC_API_URL : process.env.NEXT_PUBLIC_API_URL + '/'}${item.photo_url}`} 
+                                                            alt="" 
+                                                            className="w-full h-full object-cover"
+                                                            onError={(e) => {
+                                                                (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.student_name)}&background=0b1f3a&color=fff`;
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-[8px] font-black text-slate-300">NONE</div>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-slate-800 text-sm">{item.student_name}</p>
+                                                    <p className="text-[10px] text-slate-400 font-mono">Adm #: {item.admission_number || item.enquiry_id || item.admission_id}</p>
+                                                </div>
+                                            </div>
                                         </td>
                                         <td className="py-4 px-6 text-sm font-medium text-slate-500">
                                             {new Date(item.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}

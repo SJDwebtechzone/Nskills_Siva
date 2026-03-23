@@ -78,6 +78,10 @@ export default function StudentEnquiryForm() {
     };
 
     const handleEdit = (enq: any) => {
+        if (user?.role === "Associate") {
+            alert("Editing is restricted for Associate accounts. Please contact an Admin.");
+            return;
+        }
         setFormData({
             ...enq,
             enquiry_date: enq.enquiry_date ? enq.enquiry_date.split('T')[0] : "",
@@ -120,6 +124,7 @@ export default function StudentEnquiryForm() {
         }
         if (stepId === "B") {
             if (!formData.highest_qualification) newErrors.highest_qualification = "Required";
+            if (!formData.year_of_passing) newErrors.year_of_passing = "Required";
             if (!formData.institution_name) newErrors.institution_name = "Required";
         }
         if (stepId === "C") {
@@ -127,9 +132,24 @@ export default function StudentEnquiryForm() {
             if (!formData.parent_contact) newErrors.parent_contact = "Required";
             else if (!phoneRegex.test(formData.parent_contact)) newErrors.parent_contact = "10 digits required";
         }
+        if (stepId === "D") {
+            if (!formData.course_interested) newErrors.course_interested = "Required: Selection is mandatory";
+            if (!formData.interest_level) newErrors.interest_level = "Required";
+            if (!formData.counselling_date && !formData.follow_up_date) newErrors.follow_up_date = "Either Follow-up or Counselling date required";
+        }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
+    };
+
+    const validateAllSteps = () => {
+        for (let i = 0; i < steps.length; i++) {
+            if (!validateStep(i)) {
+                setCurrentStep(i);
+                return false;
+            }
+        }
+        return true;
     };
 
     const nextStep = () => {
@@ -149,7 +169,14 @@ export default function StudentEnquiryForm() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!validateStep(currentStep)) return;
+
+        // Safety: Prevent early submission
+        if (currentStep < steps.length - 1) {
+            nextStep();
+            return;
+        }
+
+        if (!validateAllSteps()) return;
         setIsSubmitting(true);
         try {
             if (isEditing && editId) {
@@ -202,7 +229,10 @@ export default function StudentEnquiryForm() {
                     <div className="space-y-4">
                         <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
                             <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Education</h4>
-                            <InputField label="Highest Qualification" name="highest_qualification" value={formData.highest_qualification} onChange={handleChange} error={errors.highest_qualification} compulsory />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <InputField label="Highest Qualification" name="highest_qualification" value={formData.highest_qualification} onChange={handleChange} error={errors.highest_qualification} compulsory />
+                                <InputField label="Year of Passing" name="year_of_passing" type="number" value={formData.year_of_passing} onChange={handleChange} error={errors.year_of_passing} compulsory />
+                            </div>
                             <InputField label="Institution Name" name="institution_name" value={formData.institution_name} onChange={handleChange} error={errors.institution_name} compulsory />
                         </div>
                         <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
@@ -237,10 +267,10 @@ export default function StudentEnquiryForm() {
             case "D":
                 return (
                     <div className="space-y-4">
-                        <InputField label="Course Interested" name="course_interested" value={formData.course_interested} onChange={handleChange} />
+                        <InputField label="Course Interested" name="course_interested" value={formData.course_interested} onChange={handleChange} error={errors.course_interested} compulsory />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <SelectField label="Interest Level" name="interest_level" options={["High", "Medium", "Low"]} value={formData.interest_level} onChange={handleChange} />
-                            <InputField label="Follow-up Date" name="follow_up_date" type="date" value={formData.follow_up_date} onChange={handleChange} />
+                            <SelectField label="Interest Level" name="interest_level" options={["High", "Medium", "Low"]} value={formData.interest_level} onChange={handleChange} error={errors.interest_level} compulsory />
+                            <InputField label="Follow-up Date" name="follow_up_date" type="date" value={formData.follow_up_date} onChange={handleChange} error={errors.follow_up_date} />
                         </div>
                         <TextAreaField label="Remarks" name="remarks" value={formData.remarks} onChange={handleChange} />
                     </div>
@@ -281,14 +311,42 @@ export default function StudentEnquiryForm() {
 
             {viewMode === "form" ? (
                 <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden">
-                    <div className="bg-[#0b1f3a] px-8 py-10 text-white flex justify-between items-center">
-                        <div>
-                            <h2 className="text-3xl font-black tracking-tight">{isEditing ? "Edit Enquiry" : "Student Enquiry"}</h2>
-                            <p className="text-blue-300 font-bold mt-1 uppercase text-xs tracking-widest">{isEditing ? "Update details for " + formData.student_name : steps[currentStep].title}</p>
+                    <div className="bg-[#0b1f3a] px-8 pt-10 pb-6 text-white relative overflow-hidden">
+                        <div className="flex justify-between items-center relative z-10 mb-8">
+                            <div>
+                                <h2 className="text-3xl font-black tracking-tight">{isEditing ? "Edit Enquiry" : "Student Enquiry"}</h2>
+                                <p className="text-blue-300 font-bold mt-1 uppercase text-xs tracking-[0.1em]">{isEditing ? "Update details for " + (formData.student_name || "") : steps[currentStep].title}</p>
+                            </div>
+                            <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center border border-white/20">
+                                <span className="text-xl font-black">{currentStep + 1}</span>
+                            </div>
                         </div>
-                        <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center border border-white/20">
-                            <span className="text-xl font-black">{currentStep + 1}</span>
+
+                        {/* Cleaner Step Indicator Bar */}
+                        <div className="relative z-10 flex gap-1 overflow-x-auto no-scrollbar pb-2">
+                            {steps.map((s, idx) => (
+                                <button 
+                                    key={s.id}
+                                    type="button"
+                                    onClick={() => {
+                                        if (user?.role === "Super Admin" || user?.role === "Admin") {
+                                            setCurrentStep(idx);
+                                        } else {
+                                            if (idx > currentStep) {
+                                                if (validateStep(currentStep)) setCurrentStep(idx);
+                                            } else if (idx < currentStep) {
+                                                setCurrentStep(idx);
+                                            }
+                                        }
+                                    }}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all whitespace-nowrap min-w-fit ${currentStep === idx ? 'bg-blue-600 text-white shadow-lg' : 'text-blue-200/40 hover:text-white hover:bg-white/5'}`}
+                                >
+                                    <span className="text-[11px] font-black uppercase tracking-widest">{idx + 1}. {s.title}</span>
+                                </button>
+                            ))}
                         </div>
+                        
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl z-0" />
                     </div>
 
                     <form onSubmit={handleSubmit} className="p-8 md:p-12">
@@ -303,7 +361,7 @@ export default function StudentEnquiryForm() {
                                 </button>
                             ) : (
                                 <button type="submit" disabled={isSubmitting} className="flex items-center gap-2 px-10 py-3.5 rounded-2xl font-black uppercase tracking-widest text-[10px] bg-blue-600 text-white hover:bg-blue-700 transition-all">
-                                    {isSubmitting ? "Submitting..." : "Finish & Send"} <Send size={16} />
+                                    {isSubmitting ? "Submitting..." : isEditing ? "Update Record" : "Finish & Send"} <Send size={16} />
                                 </button>
                             )}
                         </div>
@@ -311,7 +369,7 @@ export default function StudentEnquiryForm() {
                 </div>
             ) : (
                 <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl border border-slate-100 min-h-[400px]">
-                    <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-[#0b1f3a]"><Database size={24} /> My Enquiries</h3>
+                    <h3 className="text-xl font-black mb-6 flex items-center gap-2 text-slate-800"><Database size={24} /> My Enquiries</h3>
                     {isLoadingList ? <p className="text-center py-10 font-bold text-slate-400">Loading...</p> : 
                      enquiries.length === 0 ? <p className="text-center py-10 font-bold text-slate-300">No enquiries yet.</p> : (
                         <div className="overflow-x-auto">
@@ -320,6 +378,7 @@ export default function StudentEnquiryForm() {
                                     <tr>
                                         <th className="py-4 font-black uppercase text-[10px] tracking-widest text-slate-400">ID</th>
                                         <th className="py-4 font-black uppercase text-[10px] tracking-widest text-slate-400">Student</th>
+                                        <th className="py-4 font-black uppercase text-[10px] tracking-widest text-slate-400">Associate Name</th>
                                         <th className="py-4 font-black uppercase text-[10px] tracking-widest text-slate-400">Course</th>
                                         <th className="py-4 font-black uppercase text-[10px] tracking-widest text-slate-400">Date</th>
                                         <th className="py-4 text-center font-black uppercase text-[10px] tracking-widest text-slate-400">Action</th>
@@ -330,6 +389,7 @@ export default function StudentEnquiryForm() {
                                         <tr key={enq.id} className="border-b border-slate-50 hover:bg-slate-50">
                                             <td className="py-4 font-mono font-black text-blue-600">{enq.enquiry_id}</td>
                                             <td className="py-4 font-bold text-slate-800">{enq.student_name}</td>
+                                            <td className="py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">{enq.associate_name || "Self / Admin"}</td>
                                             <td className="py-4 text-sm font-medium text-slate-500">{enq.course_interested}</td>
                                             <td className="py-4 text-sm font-medium text-slate-400">{new Date(enq.created_at).toLocaleDateString()}</td>
                                              <td className="py-4 text-center">
@@ -517,12 +577,13 @@ const InputField = ({ label, name, value, onChange, type = "text", error = "", c
     </div>
 );
 
-const SelectField = ({ label, name, value, options, onChange }: any) => (
+const SelectField = ({ label, name, value, options, onChange, error = "", compulsory = false }: any) => (
     <div className="flex flex-col gap-1.5 w-full">
-        <label className="text-[10px] font-black text-slate-700 uppercase tracking-widest ml-1">{label}</label>
-        <select name={name} value={value} onChange={onChange} className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-500 font-bold text-slate-900">
+        <label className="text-[10px] font-black text-slate-700 uppercase tracking-widest ml-1">{label} {compulsory && <span className="text-red-500">*</span>}</label>
+        <select name={name} value={value} onChange={onChange} className={`w-full px-5 py-3.5 bg-slate-50 border ${error ? 'border-red-500' : 'border-slate-200'} rounded-2xl outline-none focus:border-blue-500 font-bold text-slate-900`}>
             {options.map((o: string) => <option key={o} value={o}>{o}</option>)}
         </select>
+        {error && <span className="text-red-500 text-[9px] font-black uppercase mt-1">{error}</span>}
     </div>
 );
 

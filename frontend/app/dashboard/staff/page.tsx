@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/app/context/AuthContext";
-import { Briefcase, Search, Mail, Calendar, Hash, Shield, Users } from "lucide-react";
+import { Briefcase, Search, Mail, Calendar, Hash, Shield, Users, Eye, Key, Trash2, X, Copy, CheckCircle2 } from "lucide-react";
 
 interface StaffMember {
   id: number;
@@ -49,6 +49,11 @@ export default function StaffPage() {
     role_id: 1, // Default to Trainee
   });
   const [saving, setSaving] = useState(false);
+  const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetCreds, setResetCreds] = useState<{username: string, password: string} | null>(null);
+  const [resetting, setResetting] = useState(false);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -93,6 +98,34 @@ export default function StaffPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleResetPassword = async () => {
+    if (!selectedStaff) return;
+    setResetting(true);
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+      const res = await fetch(`${baseUrl}/api/users/${selectedStaff.id}/reset-password`, {
+        method: "PUT",
+        headers: getAuthHeaders(),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResetCreds({ username: selectedStaff.email, password: data.plainPassword });
+        showToast("✅ Password reset successfully");
+      } else {
+        showToast(`❌ ${data.message || "Reset failed"}`);
+      }
+    } catch {
+      showToast("❌ Server error");
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    showToast("📋 Copied to clipboard");
   };
 
   if (!can("Staff / Trainee", "view")) {
@@ -168,7 +201,7 @@ export default function StaffPage() {
           {filtered.map((member, i) => (
             <div
               key={member.id}
-              className="staff-card"
+              className="staff-card group"
               style={{ animationDelay: `${i * 80}ms` }}
             >
               <div className="flex items-center gap-4 mb-4">
@@ -181,6 +214,22 @@ export default function StaffPage() {
                     <Mail className="w-3 h-3" />
                     <span className="truncate">{member.email}</span>
                   </p>
+                </div>
+                <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                   <button 
+                     onClick={() => { setSelectedStaff(member); setShowViewModal(true); }}
+                     className="p-1.5 bg-slate-50 text-slate-400 hover:text-purple-600 rounded-lg border border-slate-100 transition-colors"
+                     title="View Details"
+                   >
+                     <Eye size={14} />
+                   </button>
+                   <button 
+                     onClick={() => { setSelectedStaff(member); setShowResetModal(true); setResetCreds(null); }}
+                     className="p-1.5 bg-slate-50 text-slate-400 hover:text-amber-600 rounded-lg border border-slate-100 transition-colors"
+                     title="Reset Password"
+                   >
+                     <Key size={14} />
+                   </button>
                 </div>
               </div>
               <div className="pt-3 mt-2 flex flex-wrap items-center gap-2">
@@ -206,6 +255,125 @@ export default function StaffPage() {
               </div>
             </div>
           ))}
+
+          {/* View Details Modal */}
+          {showViewModal && selectedStaff && (
+            <div className="modal-overlay">
+              <div className="bg-white p-8 rounded-[32px] w-full max-w-md shadow-2xl relative animate-up">
+                <div className="flex justify-between items-center mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                      <Shield size={20} className="text-purple-600" />
+                    </div>
+                    <h2 className="text-xl font-black text-slate-800">Account Details</h2>
+                  </div>
+                  <button onClick={() => setShowViewModal(false)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-400"> <X size={20} /> </button>
+                </div>
+                
+                <div className="space-y-6">
+                  <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div className="w-16 h-16 bg-purple-600 rounded-2xl flex items-center justify-center text-white text-xl font-black">
+                      {initials(selectedStaff.name)}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-800">{selectedStaff.name}</h3>
+                      <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{selectedStaff.role_name || "TRAINEE"}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl relative group">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Email / Username</p>
+                      <p className="text-sm font-bold text-slate-800">{selectedStaff.email}</p>
+                      <button 
+                        onClick={() => copyToClipboard(selectedStaff.email)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 hover:bg-white rounded-lg opacity-0 group-hover:opacity-100 transition-all text-slate-400 hover:text-purple-600"
+                      >
+                        <Copy size={14} />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Phone</p>
+                        <p className="text-sm font-bold text-slate-800">{selectedStaff.phone_number || "—"}</p>
+                      </div>
+                      <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Created At</p>
+                        <p className="text-sm font-bold text-slate-800">{fmtDate(selectedStaff.created_at)}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <button 
+                      onClick={() => { setShowViewModal(false); setShowResetModal(true); setResetCreds(null); }}
+                      className="w-full py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20"
+                    >
+                      <Key size={14} /> Reset Academic Password
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Reset Password Modal */}
+          {showResetModal && selectedStaff && (
+            <div className="modal-overlay">
+              <div className="bg-white p-8 rounded-[32px] w-full max-w-md shadow-2xl relative animate-up">
+                <div className="flex justify-between items-center mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+                      <Key size={20} className="text-amber-600" />
+                    </div>
+                    <h2 className="text-xl font-black text-slate-800">Reset Credentials</h2>
+                  </div>
+                  <button onClick={() => setShowResetModal(false)} className="p-2 hover:bg-slate-100 rounded-xl transition-colors text-slate-400"> <X size={20} /> </button>
+                </div>
+
+                {!resetCreds ? (
+                  <div className="space-y-6">
+                    <p className="text-sm font-medium text-slate-500 leading-relaxed">
+                      This will generate a new <span className="text-slate-900 font-bold">one-time password</span> for 
+                      <span className="text-slate-900 font-bold"> {selectedStaff.name}</span>. The previous password will be instantly revoked.
+                    </p>
+                    <div className="flex gap-3">
+                      <button onClick={() => setShowResetModal(false)} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all">Cancel</button>
+                      <button 
+                        onClick={handleResetPassword}
+                        className="flex-1 bg-amber-500 hover:bg-amber-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-amber-500/20"
+                      >
+                        {resetting ? "Wait..." : "Generate"}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                     <div className="bg-emerald-50 rounded-[24px] p-6 border-2 border-emerald-100 flex flex-col items-center text-center">
+                      <CheckCircle2 className="w-8 h-8 text-emerald-500 mb-2" />
+                      <h3 className="text-lg font-black text-slate-800">New Credentials</h3>
+                      <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Share these with the user</p>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl relative">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Username / Email</p>
+                        <p className="text-sm font-bold text-slate-800">{resetCreds.username}</p>
+                        <button onClick={() => copyToClipboard(resetCreds.username)} className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-300 hover:text-purple-600"> <Copy size={16} /> </button>
+                      </div>
+                      <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl relative">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">New Password</p>
+                        <p className="text-sm font-mono font-black text-slate-800">{resetCreds.password}</p>
+                        <button onClick={() => copyToClipboard(resetCreds.password)} className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-slate-300 hover:text-amber-600"> <Copy size={16} /> </button>
+                      </div>
+                    </div>
+                    
+                    <button onClick={() => setShowResetModal(false)} className="w-full py-4 bg-slate-900 hover:bg-black text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl">Done & Close</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {filtered.length === 0 && (
             <div className="col-span-full border-2 border-dashed border-slate-200 rounded-3xl p-20 text-center">

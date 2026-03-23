@@ -115,6 +115,7 @@ interface User {
   name:  string;
   email: string;
   role:  string;
+  admission_number?: string;
 }
 
 type ModulePermission = {

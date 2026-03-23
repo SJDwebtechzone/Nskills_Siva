@@ -82,15 +82,17 @@ router.post("/", authMiddleware, async (req, res) => {
 // Get all enquiries (Filtered by Associate if not SuperAdmin)
 router.get("/", authMiddleware, async (req, res) => {
     try {
-        let query = "SELECT * FROM student_enquiries";
+        let query = `
+            SELECT se.*, u.name as associate_name 
+            FROM student_enquiries se
+            LEFT JOIN users u ON se.created_by_id = u.id
+        `;
         let params = [];
-
         if (req.user.roleName === "Associate") {
-            query += " WHERE created_by_id = $1";
+            query += " WHERE se.created_by_id = $1";
             params.push(req.user.id);
         }
-
-        query += " ORDER BY created_at DESC";
+        query += " ORDER BY se.created_at DESC";
         const result = await pool.query(query, params);
         res.json(result.rows);
     } catch (err) {

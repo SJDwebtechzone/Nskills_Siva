@@ -44,44 +44,34 @@ const TraineeLogin = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#071120] flex items-center justify-center px-4 relative overflow-hidden">
-            {/* Background elements */}
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-indigo-500/5 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/2" />
+        <div className="min-h-screen bg-[#0b1f3a] flex items-center justify-center px-4">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md animate-in fade-in zoom-in duration-500 border border-white/10">
 
-            <div className="bg-white rounded-[40px] shadow-2xl p-12 w-full max-w-lg border border-slate-100 relative z-10">
-
-                <div className="flex justify-center mb-10">
-                    <div className="w-20 h-20 bg-[#0b1f3a] rounded-3xl flex items-center justify-center shadow-xl shadow-blue-900/20">
-                         <Briefcase className="text-white w-10 h-10" />
-                    </div>
+                <div className="flex justify-center mb-6">
+                    <img src="/logo.png" alt="Logo" className="h-16 w-auto object-contain" />
                 </div>
 
-                <div className="text-center mb-10">
-                    <h2 className="text-3xl font-black text-[#0b1f3a] uppercase tracking-tight mb-2">
-                        Trainee Portal
-                    </h2>
-                    <p className="text-slate-400 font-bold text-sm">Sign in to manage your classes and students</p>
-                </div>
+                <h2 className="text-2xl font-black text-[#0b1f3a] text-center mb-8 uppercase tracking-tight">
+                    Trainee Login
+                </h2>
 
-                <form onSubmit={handleSubmit} className="space-y-8">
+                <form onSubmit={handleSubmit} className="space-y-6">
 
                     {/* Username */}
                     <div>
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">
+                        <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">
                             Username / Email
                         </label>
-                        <div className="relative group">
+                        <div className="relative">
                             <Briefcase
-                                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#0b1f3a] transition-colors"
-                                size={18}
+                                className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600"
+                                size={20}
                             />
                             <input
                                 type="text"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
-                                className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-transparent rounded-2xl 
-                                           focus:outline-none focus:bg-white focus:border-[#0b1f3a] transition-all font-bold text-slate-800 text-sm"
+                                className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all font-bold text-black"
                                 placeholder="name@nskill.com"
                                 required
                             />
@@ -90,27 +80,26 @@ const TraineeLogin = () => {
 
                     {/* Password */}
                     <div>
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">
+                        <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">
                             Secure Password
                         </label>
-                        <div className="relative group">
+                        <div className="relative">
                             <Lock
-                                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#0b1f3a] transition-colors"
-                                size={18}
+                                className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600"
+                                size={20}
                             />
                             <input
                                 type={showPassword ? "text" : "password"}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full pl-12 pr-12 py-4 bg-slate-50 border-2 border-transparent rounded-2xl 
-                                           focus:outline-none focus:bg-white focus:border-[#0b1f3a] transition-all font-bold text-slate-800 text-sm"
+                                className="w-full pl-10 pr-12 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all font-bold text-black"
                                 placeholder="••••••••"
                                 required
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#0b1f3a] transition-colors"
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-600 transition-colors"
                             >
                                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                             </button>
@@ -118,7 +107,7 @@ const TraineeLogin = () => {
                     </div>
 
                     {error && (
-                        <div className="text-red-500 text-[11px] font-black text-center bg-red-50 p-4 rounded-2xl border border-red-100 uppercase tracking-widest leading-relaxed">
+                        <div className="text-red-500 text-xs font-black text-center bg-red-50 p-3 rounded-xl border border-red-100 uppercase tracking-wider">
                             {error}
                         </div>
                     )}
@@ -126,18 +115,17 @@ const TraineeLogin = () => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-[#0b1f3a] text-white py-5 rounded-[22px] font-black uppercase tracking-[0.2em] text-sm
-                                   hover:bg-blue-900 transition-all duration-300 shadow-2xl shadow-blue-900/20 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-70 disabled:grayscale"
+                        className="w-full bg-[#0b1f3a] text-white py-4 rounded-xl font-black uppercase tracking-widest hover:bg-blue-900 transition-all duration-300 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 shadow-lg shadow-blue-900/20"
                     >
-                        {loading && <Loader2 className="w-5 h-5 animate-spin" />}
-                        {loading ? "Verifying..." : "Enter Trainee Dashboard"}
+                        {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                        {loading ? "Verifying..." : "Sign In"}
                     </button>
 
                 </form>
 
-                <div className="mt-12 text-center">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                        Technical Support: <span className="text-[#0b1f3a] cursor-pointer hover:underline">Support Desk</span>
+                <div className="mt-10 text-center">
+                    <p className="text-[10px] text-slate-400 uppercase tracking-[0.2em] font-black">
+                        NSkill Trainee Secure Access
                     </p>
                 </div>
             </div>

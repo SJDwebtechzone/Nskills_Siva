@@ -1,0 +1,12 @@
+[2026-03-23T09:16:55.481Z] PATCH Error: column "associate_name" of relation "student_admissions" does not exist
+error: column "associate_name" of relation "student_admissions" does not exist
+    at D:\DEVSPECTRA COMPANY INTERNSHIP\NSKILL2\backend\node_modules\pg-pool\index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async D:\DEVSPECTRA COMPANY INTERNSHIP\NSKILL2\backend\routes\admissions.js:332:24
+
+[2026-03-23T10:28:23.341Z] PATCH Error: invalid input syntax for type date: ""
+error: invalid input syntax for type date: ""
+    at D:\DEVSPECTRA COMPANY INTERNSHIP\NSKILL2\backend\node_modules\pg-pool\index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async D:\DEVSPECTRA COMPANY INTERNSHIP\NSKILL2\backend\routes\admissions.js:337:24
+

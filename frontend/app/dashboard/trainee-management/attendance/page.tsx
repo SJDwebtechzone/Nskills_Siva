@@ -291,11 +291,18 @@ export default function TraineeAttendancePage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-slate-100 rounded-2xl overflow-hidden shadow-inner flex-shrink-0">
+                        <div className="w-12 h-12 bg-slate-100 rounded-2xl overflow-hidden shadow-inner flex-shrink-0 flex items-center justify-center border border-slate-200">
                           {s.photo_url ? (
-                            <img src={`${process.env.NEXT_PUBLIC_API_URL}${s.photo_url}`} alt="" className="w-full h-full object-cover" />
+                            <img 
+                              src={`${process.env.NEXT_PUBLIC_API_URL?.endsWith('/') ? process.env.NEXT_PUBLIC_API_URL : process.env.NEXT_PUBLIC_API_URL + '/'}${s.photo_url}`} 
+                              alt="" 
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = "https://ui-avatars.com/api/?name=" + encodeURIComponent(s.full_name) + "&background=0b1f3a&color=fff";
+                              }}
+                            />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-slate-400 font-bold text-xs uppercase">IMG</div>
+                            <div className="w-full h-full flex items-center justify-center text-slate-400 font-black text-[10px] uppercase bg-slate-50">No Pic</div>
                           )}
                         </div>
                         <div>

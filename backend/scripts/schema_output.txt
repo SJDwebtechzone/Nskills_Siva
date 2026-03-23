@@ -1,0 +1,82 @@
+TABLE COLUMNS:
+id (integer) - NO
+enquiry_id (character varying) - YES
+admission_date (date) - YES
+full_name (character varying) - NO
+gender (character varying) - NO
+dob (date) - NO
+age (character varying) - NO
+aadhaar_number (character varying) - NO
+passport_number (character varying) - YES
+passport_validity (date) - YES
+photo_url (text) - YES
+mobile_number (character varying) - NO
+alt_mobile_number (character varying) - YES
+whatsapp_number (character varying) - NO
+email_id (character varying) - NO
+residential_address (text) - NO
+city (character varying) - NO
+state (character varying) - NO
+pin_code (character varying) - NO
+parent_name (character varying) - NO
+relationship (character varying) - NO
+parent_mobile (character varying) - NO
+occupation (character varying) - NO
+annual_income (character varying) - YES
+highest_qualification (character varying) - NO
+year_of_passing (character varying) - NO
+institution_name (character varying) - NO
+board_university (character varying) - NO
+medium_of_study (character varying) - NO
+technical_background (text) - YES
+total_experience (character varying) - YES
+industry_experience (text) - YES
+skills_known (text) - YES
+course_interested (character varying) - NO
+course_level (character varying) - NO
+mode_of_training (character varying) - NO
+batch_preference (character varying) - YES
+training_location (character varying) - YES
+career_goal (character varying) - NO
+preferred_country (character varying) - YES
+expected_salary (character varying) - YES
+willing_to_relocate (character varying) - NO
+counsellor_name (character varying) - NO
+counsellor_code (character varying) - NO
+referral_source (character varying) - NO
+counselling_date (date) - NO
+course_name (character varying) - NO
+course_fees (numeric) - NO
+total_fees (numeric) - NO
+paid_fees (numeric) - NO
+payment_mode (character varying) - NO
+payment_ref_no (character varying) - YES
+payment_date (date) - NO
+instalment_1 (numeric) - YES
+instalment_2 (numeric) - YES
+balance_amount (numeric) - NO
+has_aadhaar_file (text) - YES
+has_edu_certs_file (text) - YES
+has_passport_file (text) - YES
+has_resume_file (text) - YES
+has_address_proof_file (text) - YES
+has_photos_file (text) - YES
+student_declaration (boolean) - NO
+parent_declaration (boolean) - NO
+placement_ack (boolean) - NO
+overseas_disclaimer (boolean) - YES
+discipline_ack (boolean) - NO
+photo_consent (boolean) - NO
+refund_policy_ack (boolean) - NO
+data_privacy_ack (boolean) - NO
+final_undertaking (boolean) - NO
+emergency_contact_name (character varying) - NO
+emergency_contact_number (character varying) - NO
+emergency_authorized (boolean) - NO
+admission_number (character varying) - YES
+batch_allotted (character varying) - YES
+verified_by (character varying) - YES
+authorized_signature_by (character varying) - YES
+status (character varying) - YES
+created_at (timestamp without time zone) - YES
+created_by_id (integer) - YES

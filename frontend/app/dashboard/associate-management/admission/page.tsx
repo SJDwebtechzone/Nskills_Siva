@@ -7,7 +7,7 @@ import {
     Users, Send, ChevronRight, ChevronLeft, CheckCircle2,
     Database, Phone, Mail, Globe, Award, Sparkles, BookOpen,
     Clock, Smartphone, MessageCircle, FileText, CreditCard, ShieldCheck,
-    Search, AlertCircle, List, PlusCircle, Upload, AlertTriangle, Eye, X, Edit, Trash2
+    Search, AlertCircle, List, PlusCircle, Upload, AlertTriangle, Eye, X, Edit, Trash2, Activity
 } from "lucide-react";
 import { useAuth } from "@/app/context/AuthContext";
 import axios from "axios";
@@ -20,7 +20,7 @@ const steps = [
     { id: "BC", title: "Contact & Parent", icon: Users },
     { id: "DE", title: "Education & Exp", icon: GraduationCap },
     { id: "FG", title: "Course & Goals", icon: BookOpen },
-    { id: "IJ", title: "Fees & Referral", icon: CreditCard },
+    { id: "IJ", title: "Counselling & Fees", icon: CreditCard },
     { id: "KLM", title: "Checklist & Decl.", icon: ShieldCheck },
     { id: "N", title: "Office Use", icon: FileText },
 ];
@@ -182,6 +182,7 @@ export default function StudentAdmissionForm() {
             setFormData((prev: any) => ({
                 ...prev,
                 enquiry_id: data.enquiry_id,
+                admission_number: data.enquiry_id,
                 full_name: data.student_name || "",
                 gender: data.gender || "Male",
                 dob: data.dob ? data.dob.split('T')[0] : "",
@@ -230,6 +231,10 @@ export default function StudentAdmissionForm() {
     };
 
     const handleEdit = (adm: any) => {
+        if (user?.role === "Associate") {
+            alert("Associates are not permitted to edit admissions. Please contact Admin.");
+            return;
+        }
         setFormData({
             ...adm,
             dob: adm.dob ? adm.dob.split('T')[0] : "",
@@ -239,8 +244,9 @@ export default function StudentAdmissionForm() {
         });
         setEditId(adm.id);
         setIsEditing(true);
+        setSearchId(adm.enquiry_id || "");
         setViewMode("form");
-        setCurrentStep(1); // Jump to Basic Info
+        setCurrentStep(0); // Start at Step 0 (Search) as requested
     };
 
     const handleDelete = async (adm: any) => {
@@ -303,7 +309,7 @@ export default function StudentAdmissionForm() {
             if (!formData.counsellor_name) newErrors.counsellor_name = "Required";
             if (!formData.counsellor_code) newErrors.counsellor_code = "Required";
             if (!formData.counselling_date) newErrors.counselling_date = "Required";
-            if (!formData.course_name) newErrors.course_name = "Required";
+            if (!formData.course_name) newErrors.course_name = "Final Course Name is compulsory";
             if (!formData.payment_date) newErrors.payment_date = "Required";
         }
         if (stepId === "KLM") {
@@ -318,12 +324,29 @@ export default function StudentAdmissionForm() {
             
             if (!formData.emergency_contact_name) newErrors.emergency_contact_name = "Required";
             if (!formData.emergency_contact_number) newErrors.emergency_contact_number = "Required";
-            else if (!phoneRegex.test(formData.emergency_contact_number)) newErrors.emergency_contact_number = "Must be 10 digits";
+            if (!phoneRegex.test(formData.emergency_contact_number)) newErrors.emergency_contact_number = "Must be 10 digits";
             if (!formData.emergency_authorized) newErrors.emergency_authorized = "Authorization required";
+        }
+        if (stepId === "N") {
+            if (!formData.admission_number) newErrors.admission_number = "Required by Office";
+            if (!formData.batch_allotted) newErrors.batch_allotted = "Batch must be assigned";
+            if (!formData.verified_by) newErrors.verified_by = "Verification name required";
         }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
+    };
+
+    const validateAllSteps = () => {
+        // Start from step 1 (Basic Info) when editing, else step 0 (Search)
+        const startIdx = isEditing ? 1 : 0;
+        for (let i = startIdx; i < steps.length; i++) {
+            if (!validateStep(i)) {
+                setCurrentStep(i);
+                return false;
+            }
+        }
+        return true;
     };
 
     const nextStep = () => {
@@ -343,7 +366,14 @@ export default function StudentAdmissionForm() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!validateStep(currentStep)) return;
+        
+        // Safety: If somehow triggered before the last step, just try to go next
+        if (currentStep < steps.length - 1) {
+            nextStep();
+            return;
+        }
+
+        if (!validateAllSteps()) return;
         setIsSubmitting(true);
         
         // Prepare FormData for file uploads
@@ -547,13 +577,13 @@ export default function StudentAdmissionForm() {
                              <h4 className="font-black text-blue-900 mb-4 flex items-center gap-2 uppercase tracking-wider text-sm"><CreditCard className="text-blue-600" size={18} /> Course Fee & Payment</h4>
                              <InputField label="47. Course Name" name="course_name" value={formData.course_name} onChange={handleChange} compulsory error={errors.course_name} />
                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                                <InputField label="48. Course Fees" name="course_fees" type="number" value={formData.course_fees} onChange={handleChange} />
-                                <InputField label="49. Total Fees" name="total_fees" type="number" value={formData.total_fees} onChange={handleChange} />
-                                <InputField label="50. Paid Fees" name="paid_fees" type="number" value={formData.paid_fees} onChange={handleChange} />
+                                <InputField label="48. Course Fees" name="course_fees" type="number" value={formData.course_fees} onChange={handleChange} error={errors.course_fees} compulsory />
+                                <InputField label="49. Total Fees" name="total_fees" type="number" value={formData.total_fees} onChange={handleChange} error={errors.total_fees} compulsory />
+                                <InputField label="50. Paid Fees" name="paid_fees" type="number" value={formData.paid_fees} onChange={handleChange} error={errors.paid_fees} compulsory />
                              </div>
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                                <SelectField label="51. Payment Mode" name="payment_mode" value={formData.payment_mode} options={["Cash", "UPI", "Bank Transfer"]} onChange={handleChange} compulsory />
-                                <InputField label="52. Payment Reference No." name="payment_ref_no" value={formData.payment_ref_no} onChange={handleChange} />
+                                <SelectField label="51. Payment Mode" name="payment_mode" value={formData.payment_mode} options={["Cash", "UPI", "Bank Transfer"]} onChange={handleChange} compulsory error={errors.payment_mode} />
+                                <InputField label="52. Payment Reference No." name="payment_ref_no" value={formData.payment_ref_no} onChange={handleChange} error={errors.payment_ref_no} />
                              </div>
                              <div className="mt-4">
                                 <InputField label="53. Payment Date" name="payment_date" type="date" value={formData.payment_date} onChange={handleChange} compulsory error={errors.payment_date} />
@@ -589,12 +619,12 @@ export default function StudentAdmissionForm() {
                         <div className="p-6 bg-slate-50 rounded-2xl border border-slate-200">
                              <h4 className="font-black text-slate-800 mb-4 flex items-center gap-2 uppercase tracking-wider text-sm"><FileText className="text-blue-600" size={18} /> K. Documents Checklist (Attach Copies)</h4>
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <FileField label="Aadhaar Card" name="has_aadhaar_file" value={formData.has_aadhaar_file} onChange={handleChange} />
-                                <FileField label="Educational Certificates" name="has_edu_certs_file" value={formData.has_edu_certs_file} onChange={handleChange} />
-                                <FileField label="Passport (If Available)" name="has_passport_file" value={formData.has_passport_file} onChange={handleChange} />
-                                <FileField label="Resume / Bio-data" name="has_resume_file" value={formData.has_resume_file} onChange={handleChange} />
-                                <FileField label="Address Proof" name="has_address_proof_file" value={formData.has_address_proof_file} onChange={handleChange} />
-                                <FileField label="Passport Size Photos" name="has_photos_file" value={formData.has_photos_file} onChange={handleChange} />
+                                <FileField label="Aadhaar Card" name="has_aadhaar_file" value={formData.has_aadhaar_file} onChange={handleChange} error={errors.has_aadhaar_file} />
+                                <FileField label="Educational Certificates" name="has_edu_certs_file" value={formData.has_edu_certs_file} onChange={handleChange} error={errors.has_edu_certs_file} />
+                                <FileField label="Passport (If Available)" name="has_passport_file" value={formData.has_passport_file} onChange={handleChange} error={errors.has_passport_file} />
+                                <FileField label="Resume / Bio-data" name="has_resume_file" value={formData.has_resume_file} onChange={handleChange} error={errors.has_resume_file} />
+                                <FileField label="Address Proof" name="has_address_proof_file" value={formData.has_address_proof_file} onChange={handleChange} error={errors.has_address_proof_file} />
+                                <FileField label="Passport Size Photos" name="has_photos_file" value={formData.has_photos_file} onChange={handleChange} error={errors.has_photos_file} />
                              </div>
                         </div>
 
@@ -639,7 +669,7 @@ export default function StudentAdmissionForm() {
                         <div className="p-10 border-4 border-dashed border-slate-200 rounded-[3rem] bg-slate-50 flex flex-col items-center text-center">
                             <h4 className="font-black text-slate-800 mb-6 flex items-center gap-2 uppercase tracking-widest text-lg"><PlusCircle className="text-blue-600" size={24} /> Office Use Only</h4>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-2xl">
-                                <InputField label="Admission Number" name="admission_number" value={formData.admission_number} onChange={handleChange} placeholder="________" />
+                                <InputField label="Admission Number (Enquiry ID)" name="admission_number" value={formData.admission_number} onChange={handleChange} placeholder="________" readOnly={user?.role !== "Super Admin"} />
                                 <InputField label="Batch Allotted" name="batch_allotted" value={formData.batch_allotted} onChange={handleChange} placeholder="________" />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-2xl mt-8">
@@ -656,7 +686,7 @@ export default function StudentAdmissionForm() {
 
     const renderListContent = () => (
         <div className="p-8">
-            <h3 className="text-xl font-bold mb-6 flex items-center gap-2"><List size={24} /> Recent Admissions</h3>
+            <h3 className="text-xl font-black mb-6 flex items-center gap-2 text-slate-800"><List size={24} /> Recent Admissions</h3>
             {isLoadingList ? (
                 <div className="flex flex-col items-center py-12 gap-4">
                     <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
@@ -672,8 +702,10 @@ export default function StudentAdmissionForm() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="border-b-2 border-slate-200">
+                                <th className="py-4 px-4 font-black text-slate-900 uppercase text-xs tracking-wider">Photo</th>
                                 <th className="py-4 px-4 font-black text-slate-900 uppercase text-xs tracking-wider">Admission ID</th>
                                 <th className="py-4 px-4 font-black text-slate-900 uppercase text-xs tracking-wider">Student Name</th>
+                                <th className="py-4 px-4 font-black text-slate-900 uppercase text-xs tracking-wider">Associate Name</th>
                                 <th className="py-4 px-4 font-black text-slate-900 uppercase text-xs tracking-wider">Course</th>
                                 <th className="py-4 px-4 font-black text-slate-900 uppercase text-xs tracking-wider text-right">Balance</th>
                                 <th className="py-4 px-4 font-black text-slate-900 uppercase text-xs tracking-wider text-center">Actions</th>
@@ -682,8 +714,25 @@ export default function StudentAdmissionForm() {
                         <tbody>
                             {admissions.map((adm) => (
                                 <tr key={adm.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                                    <td className="py-5 px-4 font-mono text-blue-700 font-black">
+                                        <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
+                                            {adm.photo_url ? (
+                                                <img 
+                                                    src={`${process.env.NEXT_PUBLIC_API_URL?.endsWith('/') ? process.env.NEXT_PUBLIC_API_URL : process.env.NEXT_PUBLIC_API_URL + '/'}${adm.photo_url}`} 
+                                                    alt="" 
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLImageElement).src = "https://ui-avatars.com/api/?name=" + encodeURIComponent(adm.full_name || adm.student_name) + "&background=0b1f3a&color=fff";
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-[8px] font-black text-slate-400">NONE</div>
+                                            )}
+                                        </div>
+                                    </td>
                                     <td className="py-5 px-4 font-mono text-blue-700 font-black">{adm.admission_number || adm.enquiry_id}</td>
                                     <td className="py-5 px-4 font-black text-slate-900">{adm.full_name || adm.student_name}</td>
+                                    <td className="py-5 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider">{adm.associate_name || "Self / Admin"}</td>
                                     <td className="py-5 px-4 text-slate-700 font-bold">{adm.course_name || adm.course_interested}</td>
                                     <td className="py-5 px-4 text-right">
                                         <span className={`font-black ${parseFloat(adm.balance_amount) === 0 ? 'text-green-600' : 'text-red-500'}`}>
@@ -775,19 +824,46 @@ export default function StudentAdmissionForm() {
 
                     {/* Form Card */}
                     <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 overflow-hidden">
-                        <div className="bg-[#0b1f3a] px-8 py-10 text-white flex justify-between items-center relative overflow-hidden">
-                            <div className="relative z-10">
-                                <h2 className="text-3xl font-black tracking-tight flex items-center gap-3">
-                                    <Award className="text-blue-400" /> {isEditing ? "Edit Admission" : "Student Admission"}
-                                </h2>
-                                <p className="text-blue-300 font-bold mt-1 uppercase text-xs tracking-[0.2em]">{isEditing ? "Update details for " + formData.full_name : steps[currentStep].title}</p>
-                            </div>
-                            {formData.enquiry_id && (
-                                <div className="bg-white/10 px-6 py-3 rounded-3xl border border-white/20 backdrop-blur-md relative z-10">
-                                    <span className="text-[10px] font-black text-blue-200 block uppercase tracking-widest mb-1">Reference ID</span>
-                                    <span className="font-mono font-black text-lg">{formData.enquiry_id}</span>
+                        <div className="bg-[#0b1f3a] px-8 pt-10 pb-6 text-white relative overflow-hidden">
+                            <div className="flex justify-between items-center relative z-10 mb-8">
+                                <div>
+                                    <h2 className="text-3xl font-black tracking-tight flex items-center gap-3">
+                                        <Award className="text-blue-400" /> {isEditing ? "Edit Admission" : "Student Admission"}
+                                    </h2>
+                                    <p className="text-blue-300 font-bold mt-1 uppercase text-xs tracking-[0.1em]">{isEditing ? "Update details for " + (formData.full_name || "") : steps[currentStep].title}</p>
                                 </div>
-                            )}
+                                {formData.enquiry_id && (
+                                    <div className="bg-white/10 px-6 py-3 rounded-2xl border border-white/20 backdrop-blur-md hidden sm:block">
+                                        <p className="text-[10px] font-black text-blue-200 uppercase tracking-widest mb-1">Ref ID</p>
+                                        <p className="font-mono font-black text-lg">{formData.enquiry_id}</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Cleaner Step Indicator */}
+                            <div className="relative z-10 flex gap-1 overflow-x-auto no-scrollbar pb-2">
+                                {steps.map((s, idx) => (
+                                    <button 
+                                        key={s.id}
+                                        type="button"
+                                        onClick={() => {
+                                            if (user?.role === "Super Admin" || user?.role === "Admin") {
+                                                setCurrentStep(idx);
+                                            } else {
+                                                if (idx > currentStep) {
+                                                    if (validateStep(currentStep)) setCurrentStep(idx);
+                                                } else if (idx < currentStep) {
+                                                    setCurrentStep(idx);
+                                                }
+                                            }
+                                        }}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all whitespace-nowrap min-w-fit ${currentStep === idx ? 'bg-blue-600 text-white shadow-lg' : 'text-blue-200/40 hover:text-white hover:bg-white/5'}`}
+                                    >
+                                        <span className="text-[11px] font-black uppercase tracking-widest">{idx + 1}. {s.title}</span>
+                                    </button>
+                                ))}
+                            </div>
+                            
                             <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl z-0" />
                         </div>
 
@@ -828,9 +904,9 @@ export default function StudentAdmissionForm() {
                                         <button
                                             type="submit"
                                             disabled={isSubmitting}
-                                            className="flex items-center gap-2 px-12 py-3.5 rounded-2xl font-black uppercase tracking-widest text-[11px] bg-green-600 text-white hover:bg-green-700 shadow-xl shadow-green-100 transition-all"
+                                            className="flex items-center gap-2 px-12 py-3.5 rounded-2xl font-black uppercase tracking-widest text-[11px] bg-green-600 text-white hover:bg-green-700 shadow-xl shadow-green-100 transition-all font-mono"
                                         >
-                                            {isSubmitting ? "Finalizing..." : <>Confirm Admission <Send size={16} /></>}
+                                            {isSubmitting ? "Finalizing..." : <>{isEditing ? "Update Admission" : "Finish Admission"} <Send size={16} /></>}
                                         </button>
                                     )}
                                 </div>
@@ -1040,14 +1116,14 @@ const DetailRow = ({ label, value, color = "text-slate-700", bold = false, fontM
 );
 
 // Helper Fields
-const InputField = ({ label, name, value, onChange, type = "text", placeholder = "", error = "", compulsory = false }: any) => (
+const InputField = ({ label, name, value, onChange, type = "text", placeholder = "", error = "", compulsory = false, readOnly = false }: any) => (
     <div className="flex flex-col gap-1.5 flex-1 w-full">
         <label className="text-[12px] font-black text-slate-700 uppercase tracking-[0.1em] ml-1 flex items-center gap-1">
             {label} {compulsory && <span className="text-red-500">*</span>}
         </label>
         <input
-            type={type} name={name} value={value} onChange={onChange} placeholder={placeholder}
-            className={`w-full px-5 py-4 bg-slate-50 border ${error ? 'border-red-500 focus:ring-red-500/10' : 'border-slate-300 focus:ring-blue-100 focus:border-blue-500'} rounded-2xl outline-none focus:ring-4 transition-all text-slate-900 font-black tracking-wide placeholder:text-slate-300`}
+            type={type} name={name} value={value} onChange={onChange} placeholder={placeholder} readOnly={readOnly}
+            className={`w-full px-5 py-4 ${readOnly ? 'bg-slate-100 text-slate-500' : 'bg-slate-50 text-slate-900'} border ${error ? 'border-red-500 focus:ring-red-500/10' : 'border-slate-300 focus:ring-blue-100 focus:border-blue-500'} rounded-2xl outline-none focus:ring-4 transition-all font-black tracking-wide placeholder:text-slate-300`}
         />
         {error && <span className="text-red-500 text-[10px] font-black uppercase tracking-widest mt-1 ml-1">{error}</span>}
     </div>

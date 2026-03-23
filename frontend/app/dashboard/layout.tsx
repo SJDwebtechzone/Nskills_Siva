@@ -731,6 +731,11 @@ function DashboardLayoutContent({ children }: DashboardLayoutProps) {
                 <p className="text-[10px] text-blue-600 font-bold mt-1 tracking-wide">
                   {user?.email ?? user?.role ?? ""}
                 </p>
+                {user?.admission_number && (
+                  <p className="text-[11px] text-slate-600 font-black mt-1 uppercase tracking-wider">
+                    ADMISSION No : {user.admission_number}
+                  </p>
+                )}
               </div>
               {/* ✅ Real initials avatar */}
               <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-sm shadow-inner cursor-pointer hover:bg-blue-700 transition-colors">

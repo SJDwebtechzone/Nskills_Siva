@@ -64,10 +64,13 @@ router.post("/login", async (req, res) => {
     const userResult = await pool.query(
       `SELECT u.id, u.name, u.email, u.password, u.status,
               r.id   AS role_id,
-              r.name AS role_name
+              r.name AS role_name,
+              sa.admission_number, sa.enquiry_id
        FROM   users u
        LEFT JOIN roles r ON u.role_id = r.id
-       WHERE  u.email = $1`,
+       LEFT JOIN student_admissions sa ON sa.email_id = u.email
+       WHERE  u.email = $1
+       LIMIT 1`,
       [email]
     );
 
@@ -135,6 +138,7 @@ router.post("/login", async (req, res) => {
         name:  user.name,
         email: user.email,
         role:  user.role_name,
+        admission_number: user.admission_number || user.enquiry_id,
       },
       permissions,
     });

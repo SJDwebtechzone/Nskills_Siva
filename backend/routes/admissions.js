@@ -88,7 +88,10 @@ router.post("/", authMiddleware, uploadFields, async (req, res) => {
         const userId = req.user.id;
 
         const toDate    = v => (v && v.trim() !== "" ? v : null);
-        const toNum     = v => (v !== undefined && v !== "" ? parseFloat(v) : 0);
+        const toNum     = v => {
+            const parsed = parseFloat(v);
+            return isNaN(parsed) ? 0 : parsed;
+        };
         const toBool    = v => (v === true || v === "true");
         const toStr     = v => (v !== undefined && v !== null ? v.toString() : null);
 
@@ -106,7 +109,7 @@ router.post("/", authMiddleware, uploadFields, async (req, res) => {
         if (!payment_date)     return res.status(400).json({ error: "Payment date is required" });
         if (!counselling_date) return res.status(400).json({ error: "Counselling date is required" });
 
-        const getFilePath = (fieldName) => files[fieldName] ? files[fieldName][0].path : null;
+        const getFilePath = (fieldName) => (files && files[fieldName]) ? files[fieldName][0].path : null;
 
         const query = `
             INSERT INTO student_admissions (
@@ -152,20 +155,23 @@ router.post("/", authMiddleware, uploadFields, async (req, res) => {
             toBool(data.student_declaration), toBool(data.parent_declaration), toBool(data.placement_ack), toBool(data.overseas_disclaimer),
             toBool(data.discipline_ack), toBool(data.photo_consent), toBool(data.refund_policy_ack), toBool(data.data_privacy_ack), toBool(data.final_undertaking),
             data.emergency_contact_name, data.emergency_contact_number, toBool(data.emergency_authorized),
-            toStr(data.admission_number), toStr(data.batch_allotted), toStr(data.verified_by), toStr(data.authorized_signature_by),
+            toStr(data.admission_number || data.enquiry_id), toStr(data.batch_allotted), toStr(data.verified_by), toStr(data.authorized_signature_by),
             userId
         ];
 
+        const fs = require('fs');
+        fs.writeFileSync('scripts/query_log.txt', `QUERY: ${query}\n\nVALUES: ${JSON.stringify(values, null, 2)}`);
         const result = await pool.query(query, values);
         const newAdmission = result.rows[0];
         await addReferralPoints(newAdmission);
         res.status(201).json(newAdmission);
     } catch (err) {
-        console.error("Admission submission error:", err.message);
         if (err.code === '23505') {
             return res.status(400).json({ error: "Admission already exists for this enquiry ID" });
         }
-        res.status(500).json({ error: "Server Error", details: err.message });
+        const fs = require('fs');
+        fs.appendFileSync('scripts/error_log.txt', `[${new Date().toISOString()}] Admission Error: ${err.message}\n${err.stack}\n\n`);
+        res.status(500).json({ error: `Server Error: ${err.message}`, detail: err.detail, details: err.message });
     }
 });
 
@@ -173,13 +179,17 @@ router.post("/", authMiddleware, uploadFields, async (req, res) => {
 router.get("/", authMiddleware, async (req, res) => {
     try {
         console.log(`[admissions] GET request from user ID: ${req.user.id}, Role: ${req.user.roleName}`);
-        let query = "SELECT * FROM student_admissions";
+        let query = `
+            SELECT sa.*, u.name as associate_name 
+            FROM student_admissions sa
+            LEFT JOIN users u ON sa.created_by_id = u.id
+        `;
         let params = [];
         if (req.user.roleName === "Associate") {
-            query += " WHERE created_by_id = $1";
+            query += " WHERE sa.created_by_id = $1";
             params.push(req.user.id);
         }
-        query += " ORDER BY created_at DESC";
+        query += " ORDER BY sa.created_at DESC";
         const result = await pool.query(query, params);
         res.json(result.rows);
     } catch (err) {
@@ -191,8 +201,12 @@ router.get("/", authMiddleware, async (req, res) => {
 // Get referral points for the logged-in associate (MUST be before /:id)
 router.get("/referral-points/my", authMiddleware, async (req, res) => {
     try {
-        const result = await pool.query(
-            "SELECT * FROM associate_referral_points WHERE associate_id = $1 ORDER BY created_at DESC",
+        const result = await pool.query(`
+            SELECT rp.*, sa.admission_number, sa.enquiry_id, sa.photo_url
+            FROM associate_referral_points rp
+            LEFT JOIN student_admissions sa ON sa.id = rp.admission_id
+            WHERE rp.associate_id = $1 
+            ORDER BY rp.created_at DESC`,
             [req.user.id]
         );
         res.json(result.rows);
@@ -209,9 +223,10 @@ router.get("/referral-points/all", authMiddleware, async (req, res) => {
             return res.status(403).json({ error: "Access denied. Admin only." });
         }
         const result = await pool.query(`
-            SELECT rp.*, u.name as associate_name, u.email as associate_email
+            SELECT rp.*, u.name as associate_name, u.email as associate_email, sa.admission_number, sa.enquiry_id, sa.photo_url
             FROM associate_referral_points rp
             LEFT JOIN users u ON u.id = rp.associate_id
+            LEFT JOIN student_admissions sa ON sa.id = rp.admission_id
             ORDER BY rp.created_at DESC
         `);
         res.json(result.rows);
@@ -287,7 +302,7 @@ router.patch("/:id", authMiddleware, uploadFields, async (req, res) => {
         const data = req.body || {};
         const files = req.files || {};
         
-        const fields = Object.keys(data).filter(f => !['id', 'created_at', 'created_by_id'].includes(f));
+        const fields = Object.keys(data).filter(f => !['id', 'created_at', 'created_by_id', 'associate_name', 'student_name', 'photo_file', 'has_aadhaar_file', 'has_edu_certs_file', 'has_passport_file', 'has_resume_file', 'has_address_proof_file', 'has_photos_file'].includes(f));
         
         // Handle files in PATCH too
         const fileFields = Object.keys(files);
@@ -296,7 +311,14 @@ router.patch("/:id", authMiddleware, uploadFields, async (req, res) => {
         }
 
         const setClauseParts = fields.map((f, i) => `${f} = $${i + 1}`);
-        const values = fields.map(f => data[f]);
+        const numericFields = ['course_fees', 'total_fees', 'paid_fees', 'instalment_1', 'instalment_2', 'balance_amount', 'age'];
+        const values = fields.map(f => {
+            if (numericFields.includes(f)) {
+                const p = parseFloat(data[f]);
+                return isNaN(p) ? 0 : p;
+            }
+            return data[f];
+        });
         
         // Add file updates to the query if any
         let counter = values.length + 1;
@@ -309,10 +331,10 @@ router.patch("/:id", authMiddleware, uploadFields, async (req, res) => {
         });
 
         values.push(id);
-        const result = await pool.query(
-            `UPDATE student_admissions SET ${setClauseParts.join(", ")} WHERE id = $${values.length} RETURNING *`,
-            values
-        );
+        const fs = require('fs');
+        const queryStr = `UPDATE student_admissions SET ${setClauseParts.join(", ")} WHERE id = $${values.length} RETURNING *`;
+        fs.writeFileSync('scripts/patch_query_log.txt', `QUERY: ${queryStr}\n\nVALUES: ${JSON.stringify(values, null, 2)}`);
+        const result = await pool.query(queryStr, values);
         if (result.rows.length === 0) return res.status(404).json({ error: "Admission not found" });
 
         const updated = result.rows[0];
@@ -320,7 +342,9 @@ router.patch("/:id", authMiddleware, uploadFields, async (req, res) => {
         res.json(updated);
     } catch (err) {
         console.error("Update admission error:", err.message);
-        res.status(500).json({ error: "Server Error", details: err.message });
+        const fs = require('fs');
+        fs.appendFileSync('scripts/error_log.txt', `[${new Date().toISOString()}] PATCH Error: ${err.message}\n${err.stack}\n\n`);
+        res.status(500).json({ error: `Server Error: ${err.message}`, detail: err.detail, details: err.message });
     }
 });
 

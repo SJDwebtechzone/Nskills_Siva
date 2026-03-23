@@ -1,0 +1,9 @@
+TABLE COLUMNS:
+id (integer) - NO
+associate_id (integer) - YES
+admission_id (integer) - YES
+student_name (character varying) - YES
+course_fee (numeric) - YES
+points_earned (numeric) - YES
+is_settled (boolean) - YES
+created_at (timestamp without time zone) - YES
